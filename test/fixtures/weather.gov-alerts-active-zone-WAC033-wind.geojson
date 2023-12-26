@@ -1,0 +1,80 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.03c9a16ab3afeeb61c14b4af6207edf30654fcb6.002.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.03c9a16ab3afeeb61c14b4af6207edf30654fcb6.002.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.03c9a16ab3afeeb61c14b4af6207edf30654fcb6.002.1",
+                "areaDesc": "East Puget Sound Lowlands",
+                "geocode": {
+                    "SAME": [
+                        "053033",
+                        "053053",
+                        "053061"
+                    ],
+                    "UGC": [
+                        "WAZ555"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/WAZ555"
+                ],
+                "references": [],
+                "sent": "2023-12-26T03:52:00-08:00",
+                "effective": "2023-12-26T03:52:00-08:00",
+                "onset": "2023-12-26T18:00:00-08:00",
+                "expires": "2023-12-26T16:00:00-08:00",
+                "ends": "2023-12-27T13:00:00-08:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Moderate",
+                "certainty": "Likely",
+                "urgency": "Expected",
+                "event": "Wind Advisory",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Seattle WA",
+                "headline": "Wind Advisory issued December 26 at 3:52AM PST until December 27 at 1:00PM PST by NWS Seattle WA",
+                "description": "* WHAT...East winds 20 to 35 mph with gusts 45 to 55 mph near gaps\nin the terrain.\n\n* WHERE...East Puget Sound Lowlands.\n\n* WHEN...From 6 PM this evening to 1 PM PST Wednesday.\n\n* IMPACTS...Gusty winds could blow around unsecured objects.\nTree limbs could be blown down and a few power outages may\nresult.",
+                "instruction": "Use extra caution when driving, especially if operating a high\nprofile vehicle. Secure outdoor objects.",
+                "response": "Execute",
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "NPWSEW"
+                    ],
+                    "WMOidentifier": [
+                        "WWUS76 KSEW 261152"
+                    ],
+                    "NWSheadline": [
+                        "WIND ADVISORY IN EFFECT FROM 6 PM THIS EVENING TO 1 PM PST WEDNESDAY"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KSEW.WI.Y.0023.231227T0200Z-231227T2100Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2023-12-27T21:00:00+00:00"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current watches, warnings, and advisories for King County (WAC033) WA",
+    "updated": "2023-12-26T18:00:00+00:00"
+}
