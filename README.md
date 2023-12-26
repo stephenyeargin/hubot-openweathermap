@@ -2,6 +2,8 @@
 
 Retrieves the current conditions for a configured location or by query.
 
+[![npm version](https://badge.fury.io/js/hubot-openweathermap.svg)](http://badge.fury.io/js/hubot-openweathermap) [![Node CI](https://github.com/stephenyeargin/hubot-openweathermap/actions/workflows/nodejs.yml/badge.svg)](https://github.com/stephenyeargin/hubot-openweathermap/actions/workflows/nodejs.yml)
+
 ## Installation
 
 In your hubot repository, run:
