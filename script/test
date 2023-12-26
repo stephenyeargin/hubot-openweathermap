@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# bootstrap environment
+source script/bootstrap
+
+mocha "test/**/*.js" --reporter spec --exit
