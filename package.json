@@ -1,5 +1,5 @@
 {
-  "name": "hubot-openweathermap",
+  "name": "@stephenyeargin/hubot-openweathermap",
   "description": "Retrieves the current conditions for a configured location or by query",
   "version": "1.0.0",
   "author": "Stephen Yeargin <stephen@yearg.in>",
