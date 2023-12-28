@@ -32,3 +32,7 @@ Then add **@stephenyeargin/hubot-openweathermap** to your `external-scripts.json
 user1> hubot weather
 hubot> Currently Clouds and 49F/10C in Nashville
 ```
+
+### Slack
+
+![screenshot](./screenshot.png)

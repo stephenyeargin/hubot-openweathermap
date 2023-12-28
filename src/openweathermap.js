@@ -10,9 +10,26 @@
 //   HUBOT_DEFAULT_LATITUDE - Default latitude for Hubot interactions
 //   HUBOT_DEFAULT_LONGITUDE - Default longitude for Hubot interactions
 
+const dayjs = require('dayjs');
+
 module.exports = (robot) => {
   const baseUrl = 'https://api.openweathermap.org/data/2.5/weather';
   const baseUrlNWS = 'https://api.weather.gov';
+
+  const getSeverityColor = (severity) => {
+    switch (severity.toLowerCase()) {
+      case 'extreme':
+        return '#FF3838';
+      case 'severe':
+        return '#FFB302';
+      case 'moderate':
+        return '#FCE83A';
+      case 'minor':
+        return '#56F000';
+      default:
+        return '#A4ABB6';
+    }
+  };
 
   const getForecast = (query, callback) => {
     query.appid = process.env.HUBOT_OPEN_WEATHER_MAP_API_KEY;
@@ -58,7 +75,51 @@ module.exports = (robot) => {
     json.features.forEach((alert) => {
       output.push(`- ${alert.properties.headline}`);
     });
-    return output.join('\n');
+    const textFallback = output.join('\n');
+    if (robot.adapterName && robot.adapterName.indexOf('slack') > -1) {
+      const attachments = json.features.map((alert) => ({
+        author_icon: 'https://github.com/NOAAGov.png',
+        author_link: 'https://weather.gov/',
+        author_name: 'Weather.gov',
+        pretext: alert.properties.event,
+        title: alert.properties.headline,
+        fallback: alert.properties.description,
+        text: '```\n'
+              + `${alert.properties.description}\n`
+              + '```',
+        mrkdwn_in: ['text'],
+        fields: [
+          {
+            title: 'Severity',
+            value: alert.properties.severity,
+            short: true,
+          },
+          {
+            title: 'Certainty',
+            value: alert.properties.certainty,
+            short: true,
+          },
+          {
+            title: 'Areas Affected',
+            value: alert.properties.areaDesc,
+            short: false,
+          },
+          {
+            title: 'Instructions / Response',
+            value: alert.properties.instruction || alert.properties.response,
+            short: false,
+          },
+        ],
+        color: getSeverityColor(alert.properties.severity),
+        ts: dayjs(alert.properties.sent).unix(),
+      }));
+      return {
+        text: `*${json.title}*`,
+        mrkdwn: true,
+        attachments,
+      };
+    }
+    return textFallback;
   };
 
   const formatUnits = (value, unit) => {
@@ -76,7 +137,48 @@ module.exports = (robot) => {
     return output.toFixed(0);
   };
 
-  const formatWeather = (json) => `Currently ${json.weather[0].main} and ${formatUnits(json.main.temp, 'imperial')}F/${formatUnits(json.main.temp, 'metric')}C in ${json.name}`;
+  const formatWeather = (json) => {
+    const textFallback = `Currently ${json.weather[0].main} and ${formatUnits(json.main.temp, 'imperial')}F/${formatUnits(json.main.temp, 'metric')}C in ${json.name}`;
+    if (robot.adapterName && robot.adapterName.indexOf('slack') > -1) {
+      return {
+        attachments: [{
+          title: `Weather in ${json.name}`,
+          title_link: `https://openweathermap.org/weathermap?zoom=12&lat=${json.coord.lat}&lon=${json.coord.lon}`,
+          fallback: textFallback,
+          author_icon: 'https://github.com/openweathermap.png',
+          author_link: 'https://openweathermap.org/',
+          author_name: 'OpenWeather',
+          color: '#eb6e4b',
+          thumb_url: `https://openweathermap.org/img/wn/${json.weather[0].icon}@4x.png`,
+          fields: [
+            {
+              title: 'Conditions',
+              value: `${json.weather[0].main} (${json.weather[0].description})`,
+              short: true,
+            },
+            {
+              title: 'Temperature',
+              value: `${formatUnits(json.main.temp, 'imperial')}F/${formatUnits(json.main.temp, 'metric')}C`,
+              short: true,
+            },
+            {
+              title: 'Feels Like',
+              value: `${formatUnits(json.main.feels_like, 'imperial')}F/${formatUnits(json.main.feels_like, 'metric')}C`,
+              short: true,
+            },
+            {
+              title: 'Humidity',
+              value: `${json.main.humidity}%`,
+              short: true,
+            },
+          ],
+          footer: 'Weather data provided by OpenWeather',
+          ts: json.dt,
+        }],
+      };
+    }
+    return textFallback;
+  };
 
   const handleError = (err, msg) => {
     robot.logger.error(err);
