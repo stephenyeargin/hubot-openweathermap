@@ -7,7 +7,6 @@
 //
 // Configuration:
 //   HUBOT_OPEN_WEATHER_MAP_API_KEY - API Key
-//   HUBOT_OPEN_WEATHER_MAP_PLAIN_TEXT - Force response to be plain text
 //   HUBOT_DEFAULT_LATITUDE - Default latitude for Hubot interactions
 //   HUBOT_DEFAULT_LONGITUDE - Default longitude for Hubot interactions
 
@@ -85,9 +84,6 @@ module.exports = (robot) => {
       output.push(`- ${alert.properties.headline}`);
     });
     const textFallback = output.join('\n');
-    if (process.env.HUBOT_OPEN_WEATHER_MAP_PLAIN_TEXT) {
-      return textFallback;
-    }
     if (robot.adapterName && robot.adapterName.indexOf('slack') > -1) {
       const attachments = json.features.map((alert) => ({
         author_icon: 'https://github.com/NOAAGov.png',
@@ -197,9 +193,6 @@ module.exports = (robot) => {
 
   const formatWeather = (json) => {
     const textFallback = `Currently ${json.weather[0].description} and ${formatUnits(json.main.temp, 'imperial')}F/${formatUnits(json.main.temp, 'metric')}C in ${json.name}`;
-    if (process.env.HUBOT_OPEN_WEATHER_MAP_PLAIN_TEXT) {
-      return textFallback;
-    }
     if (robot.adapterName && robot.adapterName.indexOf('slack') > -1) {
       return {
         attachments: [{
