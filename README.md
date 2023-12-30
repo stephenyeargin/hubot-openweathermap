@@ -22,7 +22,8 @@ Then add **@stephenyeargin/hubot-openweathermap** to your `external-scripts.json
 
 | Environment Variables    | Required? | Description                              |
 | ------------------------ | :-------: | ---------------------------------------- |
-| `HUBOT_OPEN_WEATHER_MAP_API_KEY`  | Yes       | API key from the developer console       |
+| `HUBOT_OPEN_WEATHER_MAP_API_KEY`  | Yes | API key from the developer console |
+| `HUBOT_OPEN_WEATHER_MAP_PLAIN_TEXT`[^1] | No | If true, avoids custom formatting for the Hubot adapter |
 | `HUBOT_DEFAULT_LATITUDE` | No | Latitude for default query of `hubot weather` |
 | `HUBOT_DEFAULT_LONGITUDE` | No | Longitude for default query of `hubot weather` |
 
@@ -36,3 +37,5 @@ hubot> Currently Clouds and 49F/10C in Nashville
 ### Slack
 
 ![screenshot](./screenshot.png)
+
+[^1]: Necessary if your Hubot instance is running the `hubot-discord` and not `@hubot-friends/hubot-discord` because the former will appear as `[object Object]`.

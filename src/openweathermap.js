@@ -7,10 +7,13 @@
 //
 // Configuration:
 //   HUBOT_OPEN_WEATHER_MAP_API_KEY - API Key
+//   HUBOT_OPEN_WEATHER_MAP_PLAIN_TEXT - Force response to be plain text
 //   HUBOT_DEFAULT_LATITUDE - Default latitude for Hubot interactions
 //   HUBOT_DEFAULT_LONGITUDE - Default longitude for Hubot interactions
 
 const dayjs = require('dayjs');
+const semver = require('semver');
+const { EmbedBuilder: DiscordEmbedBuilder } = require('discord.js');
 
 module.exports = (robot) => {
   const baseUrl = 'https://api.openweathermap.org/data/2.5/weather';
@@ -50,6 +53,9 @@ module.exports = (robot) => {
   };
 
   const getAlerts = (query, callback) => robot.http(`${baseUrlNWS}/points/${query.latitude},${query.longitude}`)
+    .headers({
+      'User-agent': '@stephenyeargin/hubot-openweathermap <hubot@yearg.in>',
+    })
     .get()((err1, res1, body1) => {
       if (err1) {
         callback(err1);
@@ -59,6 +65,9 @@ module.exports = (robot) => {
       const countyCode = pointJSON.properties.county.match(/.*\/(\w+)$/)[1];
 
       robot.http(`${baseUrlNWS}/alerts/active/zone/${countyCode}`)
+        .headers({
+          'User-agent': '@stephenyeargin/hubot-openweathermap <hubot@yearg.in>',
+        })
         .get()((err2, res2, body2) => {
           if (err2) {
             callback(err2);
@@ -76,6 +85,9 @@ module.exports = (robot) => {
       output.push(`- ${alert.properties.headline}`);
     });
     const textFallback = output.join('\n');
+    if (process.env.HUBOT_OPEN_WEATHER_MAP_PLAIN_TEXT) {
+      return textFallback;
+    }
     if (robot.adapterName && robot.adapterName.indexOf('slack') > -1) {
       const attachments = json.features.map((alert) => ({
         author_icon: 'https://github.com/NOAAGov.png',
@@ -110,6 +122,7 @@ module.exports = (robot) => {
             short: false,
           },
         ],
+        footer: 'Alerts provided by the National Weather Service',
         color: getSeverityColor(alert.properties.severity),
         ts: dayjs(alert.properties.sent).unix(),
       }));
@@ -118,6 +131,51 @@ module.exports = (robot) => {
         mrkdwn: true,
         attachments,
       };
+    }
+    if (robot.adapterName && robot.adapterName.indexOf('discord') > -1) {
+      if (semver.lt(robot.parseVersion(), '11.0.0')) {
+        robot.logger.info('@stephenyeargin/hubot-openweathermap: Unable to use Discord embeds if Hubot < v11');
+        return textFallback;
+      }
+      const embeds = json.features.map((alert) => new DiscordEmbedBuilder()
+        .setTitle(alert.properties.headline)
+        .setColor(getSeverityColor(alert.properties.severity))
+        .setTimestamp(new Date(alert.properties.sent))
+        .setAuthor({
+          name: 'Weather.gov',
+          url: 'https://weather.gov/',
+          iconURL: 'https://github.com/NOAAGov.png',
+        })
+        .setDescription('```\n'
+        + `${alert.properties.description}\n`
+        + '```')
+        .addFields(
+          {
+            name: 'Severity',
+            value: alert.properties.severity,
+            inline: true,
+          },
+          {
+            name: 'Certainty',
+            value: alert.properties.certainty,
+            inline: true,
+          },
+          {
+            name: 'Areas Affected',
+            value: alert.properties.areaDesc,
+            inline: false,
+          },
+          {
+            name: 'Instructions / Response',
+            value: alert.properties.instruction || alert.properties.response,
+            inline: false,
+          },
+        )
+        .setFooter({
+          text: 'Alerts provided by the National Weather Service',
+          iconURL: 'https://github.com/NOAAGov.png',
+        }));
+      return { embeds };
     }
     return textFallback;
   };
@@ -138,7 +196,10 @@ module.exports = (robot) => {
   };
 
   const formatWeather = (json) => {
-    const textFallback = `Currently ${json.weather[0].main} and ${formatUnits(json.main.temp, 'imperial')}F/${formatUnits(json.main.temp, 'metric')}C in ${json.name}`;
+    const textFallback = `Currently ${json.weather[0].description} and ${formatUnits(json.main.temp, 'imperial')}F/${formatUnits(json.main.temp, 'metric')}C in ${json.name}`;
+    if (process.env.HUBOT_OPEN_WEATHER_MAP_PLAIN_TEXT) {
+      return textFallback;
+    }
     if (robot.adapterName && robot.adapterName.indexOf('slack') > -1) {
       return {
         attachments: [{
@@ -176,6 +237,51 @@ module.exports = (robot) => {
           ts: json.dt,
         }],
       };
+    }
+    if (robot.adapterName && robot.adapterName.indexOf('discord') > -1) {
+      if (semver.lt(robot.parseVersion(), '11.0.0')) {
+        robot.logger.info('@stephenyeargin/hubot-openweathermap: Unable to use Discord embeds if Hubot < v11');
+        return textFallback;
+      }
+
+      const embed = new DiscordEmbedBuilder()
+        .setTitle(`Weather in ${json.name}`)
+        .setURL(`https://openweathermap.org/weathermap?zoom=12&lat=${json.coord.lat}&lon=${json.coord.lon}`)
+        .setAuthor({
+          name: 'OpenWeather',
+          url: 'https://openweathermap.org/',
+          iconURL: 'https://github.com/openweathermap.png',
+        })
+        .addFields(
+          {
+            name: 'Conditions',
+            value: `${json.weather[0].main} (${json.weather[0].description})`,
+            inline: true,
+          },
+          {
+            name: 'Temperature',
+            value: `${formatUnits(json.main.temp, 'imperial')}F/${formatUnits(json.main.temp, 'metric')}C`,
+            inline: true,
+          },
+          {
+            name: 'Feels Like',
+            value: `${formatUnits(json.main.feels_like, 'imperial')}F/${formatUnits(json.main.feels_like, 'metric')}C`,
+            inline: true,
+          },
+          {
+            name: 'Humidity',
+            value: `${json.main.humidity}%`,
+            inline: true,
+          },
+        )
+        .setThumbnail(`https://openweathermap.org/img/wn/${json.weather[0].icon}@4x.png`)
+        .setColor('#eb6e4b')
+        .setFooter({
+          text: 'Weather data provided by OpenWeather',
+          iconURL: 'https://github.com/openweathermap.png',
+        })
+        .setTimestamp(new Date(json.dt * 1000));
+      return { embeds: [embed] };
     }
     return textFallback;
   };

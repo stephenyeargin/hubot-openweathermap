@@ -59,7 +59,7 @@ describe('hubot-openweathermap slack', () => {
                 author_link: 'https://openweathermap.org/',
                 author_name: 'OpenWeather',
                 color: '#eb6e4b',
-                fallback: 'Currently Clouds and 50F/10C in Nashville',
+                fallback: 'Currently broken clouds and 50F/10C in Nashville',
                 fields: [
                   {
                     short: true,
@@ -124,7 +124,7 @@ describe('hubot-openweathermap slack', () => {
                 author_link: 'https://openweathermap.org/',
                 author_name: 'OpenWeather',
                 color: '#eb6e4b',
-                fallback: 'Currently Clouds and 50F/10C in Nashville',
+                fallback: 'Currently broken clouds and 50F/10C in Nashville',
                 fields: [
                   {
                     short: true,
@@ -195,6 +195,7 @@ describe('hubot-openweathermap slack', () => {
                 pretext: 'Flood Advisory',
                 text: '```\n* WHAT...Flooding caused by excessive rainfall is expected.\n\n* WHERE...A portion of Middle Tennessee, including the following\ncounties, Cheatham, Davidson, Macon, Robertson, Sumner and\nTrousdale.\n\n* WHEN...Until 900 PM CST.\n\n* IMPACTS...Minor flooding in low-lying and poor drainage areas.\n\n* ADDITIONAL DETAILS...\n- At 548 PM CST, Doppler radar indicated heavy rain due to\nthunderstorms. Minor flooding is ongoing or expected to begin\nshortly in the advisory area. Between 1 and 2 inches of rain\nhave fallen.\n- Some locations that will experience flooding include...\nGallatin, Ashland City, Lafayette, Madison, Hendersonville,\nGoodlettsville, White House, Millersville, Greenbrier,\nWestmoreland, Ridgetop, Old Hickory, Joelton, Cottontown,\nBledsoe Creek State Park, Whites Creek, Bethpage, Beaman Park\nand Bells Bend.\n- http://www.weather.gov/safety/flood\n```',
                 title: 'Flood Advisory issued December 9 at 5:48PM CST until December 9 at 9:00PM CST by NWS Nashville TN',
+                footer: 'Alerts provided by the National Weather Service',
                 ts: 1702165680,
               },
               {
@@ -228,6 +229,7 @@ describe('hubot-openweathermap slack', () => {
                 mrkdwn_in: [
                   'text',
                 ],
+                footer: 'Alerts provided by the National Weather Service',
                 pretext: 'Tornado Watch',
                 text: '```\nTORNADO WATCH 714 REMAINS VALID UNTIL 7 PM CST THIS EVENING FOR\nTHE FOLLOWING AREAS\n\nIN TENNESSEE THIS WATCH INCLUDES 14 COUNTIES\n\nIN MIDDLE TENNESSEE\n\nDAVIDSON              HICKMAN               LAWRENCE\nLEWIS                 MACON                 MAURY\nPERRY                 RUTHERFORD            SMITH\nSUMNER                TROUSDALE             WAYNE\nWILLIAMSON            WILSON\n\nTHIS INCLUDES THE CITIES OF BRENTWOOD, CARTHAGE, CENTERVILLE,\nCLIFTON, COLLINWOOD, COLUMBIA, FRANKLIN, GALLATIN,\nGOODLETTSVILLE, GORDONSVILLE, HARTSVILLE, HENDERSONVILLE,\nHOHENWALD, LA VERGNE, LAFAYETTE, LAWRENCEBURG, LEBANON, LINDEN,\nLOBELVILLE, MOUNT JULIET, MURFREESBORO, NASHVILLE, SMYRNA,\nSOUTH CARTHAGE, AND WAYNESBORO.\n```',
                 title: 'Tornado Watch issued December 9 at 5:38PM CST until December 9 at 7:00PM CST by NWS Nashville TN',
@@ -271,7 +273,7 @@ describe('hubot-openweathermap slack', () => {
                 author_link: 'https://openweathermap.org/',
                 author_name: 'OpenWeather',
                 color: '#eb6e4b',
-                fallback: 'Currently Clouds and 50F/10C in Nashville',
+                fallback: 'Currently broken clouds and 50F/10C in Nashville',
                 fields: [
                   {
                     short: true,
@@ -336,7 +338,7 @@ describe('hubot-openweathermap slack', () => {
                 author_link: 'https://openweathermap.org/',
                 author_name: 'OpenWeather',
                 color: '#eb6e4b',
-                fallback: 'Currently Clouds and 47F/8C in Seattle',
+                fallback: 'Currently scattered clouds and 47F/8C in Seattle',
                 fields: [
                   {
                     short: true,
@@ -406,6 +408,7 @@ describe('hubot-openweathermap slack', () => {
                 pretext: 'Wind Advisory',
                 text: '```\n* WHAT...East winds 20 to 35 mph with gusts 45 to 55 mph near gaps\nin the terrain.\n\n* WHERE...East Puget Sound Lowlands.\n\n* WHEN...From 6 PM this evening to 1 PM PST Wednesday.\n\n* IMPACTS...Gusty winds could blow around unsecured objects.\nTree limbs could be blown down and a few power outages may\nresult.\n```',
                 title: 'Wind Advisory issued December 26 at 3:52AM PST until December 27 at 1:00PM PST by NWS Seattle WA',
+                footer: 'Alerts provided by the National Weather Service',
                 ts: 1703591520,
               },
             ],
