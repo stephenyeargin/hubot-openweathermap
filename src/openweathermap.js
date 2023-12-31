@@ -13,12 +13,18 @@
 const dayjs = require('dayjs');
 const semver = require('semver');
 const { EmbedBuilder: DiscordEmbedBuilder } = require('discord.js');
+// eslint-disable-next-line global-require
 const hubotVersion = require('hubot/package.json').version || '0.0.0';
 
 module.exports = (robot) => {
   const baseUrl = 'https://api.openweathermap.org/data/2.5/weather';
   const baseUrlNWS = 'https://api.weather.gov';
 
+  /**
+   * Get Severity Color
+   * @param {string} severity NWS severity scale
+   * @returns string
+   */
   const getSeverityColor = (severity) => {
     switch (severity.toLowerCase()) {
       case 'extreme':
@@ -34,11 +40,17 @@ module.exports = (robot) => {
     }
   };
 
+  /**
+   * Get Forecast
+   * @param {string} query City or zip code search
+   * @param {function} callback Arguments: Error, Response Object
+   * @return void
+   */
   const getForecast = (query, callback) => {
     query.appid = process.env.HUBOT_OPEN_WEATHER_MAP_API_KEY;
     robot.http(baseUrl)
       .query(query)
-      .get()((err, res, body) => {
+      .get()((err, _res, body) => {
         if (err) {
           callback(err);
           return;
@@ -52,11 +64,17 @@ module.exports = (robot) => {
       });
   };
 
+  /**
+   * Get Alerts
+   * @param {object} query Geo coordinates for alert location as { latitude, longitude }
+   * @param {function} callback Arguments: Error, Response Object
+   * @returns void
+   */
   const getAlerts = (query, callback) => robot.http(`${baseUrlNWS}/points/${query.latitude},${query.longitude}`)
     .headers({
       'User-agent': '@stephenyeargin/hubot-openweathermap <hubot@yearg.in>',
     })
-    .get()((err1, res1, body1) => {
+    .get()((err1, _res1, body1) => {
       if (err1) {
         callback(err1);
         return;
@@ -68,7 +86,7 @@ module.exports = (robot) => {
         .headers({
           'User-agent': '@stephenyeargin/hubot-openweathermap <hubot@yearg.in>',
         })
-        .get()((err2, res2, body2) => {
+        .get()((err2, _res2, body2) => {
           if (err2) {
             callback(err2);
             return;
@@ -79,6 +97,11 @@ module.exports = (robot) => {
         });
     });
 
+  /**
+   * Format Alerts
+   * @param {object} json Alert API response object
+   * @returns string|object Return format based on Hubot adapter
+   */
   const formatAlerts = (json) => {
     const output = [`${json.title}:`];
     json.features.forEach((alert) => {
@@ -177,6 +200,12 @@ module.exports = (robot) => {
     return textFallback;
   };
 
+  /**
+   *
+   * @param {float} value Raw value from API
+   * @param {string} unit Desired measurement (metric, imperial)
+   * @returns
+   */
   const formatUnits = (value, unit) => {
     let output;
     switch (unit) {
@@ -192,6 +221,11 @@ module.exports = (robot) => {
     return output.toFixed(0);
   };
 
+  /**
+   *
+   * @param {object} json Response object from API
+   * @returns string|object Return format based on Hubot adapter
+   */
   const formatWeather = (json) => {
     const textFallback = `Currently ${json.weather[0].description} and ${formatUnits(json.main.temp, 'imperial')}F/${formatUnits(json.main.temp, 'metric')}C in ${json.name}`;
     if (robot.adapterName && robot.adapterName.indexOf('slack') > -1) {
@@ -280,6 +314,11 @@ module.exports = (robot) => {
     return textFallback;
   };
 
+  /**
+   *
+   * @param {object|string} err Stringable object or string representing error
+   * @param {*} msg
+   */
   const handleError = (err, msg) => {
     robot.logger.error(err);
     msg.send(`Encountered error: ${err}`);
@@ -305,6 +344,7 @@ module.exports = (robot) => {
         handleError(err1, msg);
         return;
       }
+      robot.logger.debug(forecastData);
       msg.send(formatWeather(forecastData));
 
       getAlerts({
@@ -315,7 +355,7 @@ module.exports = (robot) => {
           handleError(err2, msg);
           return;
         }
-        robot.logger.info(alertData);
+        robot.logger.debug(alertData);
         if (alertData.features.length > 0) {
           msg.send(formatAlerts(alertData));
         }
@@ -329,7 +369,6 @@ module.exports = (robot) => {
       msg.send('No API Key configured.');
       return;
     }
-
     const zipCode = msg.match[1];
 
     getForecast({
@@ -339,6 +378,7 @@ module.exports = (robot) => {
         handleError(err1, msg);
         return;
       }
+      robot.logger.debug(forecastData);
       msg.send(formatWeather(forecastData));
 
       getAlerts({
@@ -376,9 +416,8 @@ module.exports = (robot) => {
         handleError(err1, msg);
         return;
       }
-
+      robot.logger.debug(forecastData);
       msg.send(formatWeather(forecastData));
-
       getAlerts({
         latitude: forecastData.coord.lat,
         longitude: forecastData.coord.lon,
@@ -387,7 +426,7 @@ module.exports = (robot) => {
           handleError(err2, msg);
           return;
         }
-        robot.logger.info(alertData);
+        robot.logger.debug(alertData);
         if (alertData.features.length > 0) {
           msg.send(formatAlerts(alertData));
         }
