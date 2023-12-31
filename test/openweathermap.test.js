@@ -47,7 +47,7 @@ describe('hubot-openweathermap', () => {
     it('hubot responds with message', () => {
       expect(room.messages).to.eql([
         ['alice', 'hubot weather'],
-        ['hubot', 'Currently Clouds and 50F/10C in Nashville'],
+        ['hubot', 'Currently broken clouds and 50F/10C in Nashville'],
       ]);
     });
   });
@@ -72,7 +72,7 @@ describe('hubot-openweathermap', () => {
     it('hubot responds with message', () => {
       expect(room.messages).to.eql([
         ['alice', 'hubot weather'],
-        ['hubot', 'Currently Clouds and 50F/10C in Nashville'],
+        ['hubot', 'Currently broken clouds and 50F/10C in Nashville'],
         [
           'hubot',
           'Current watches, warnings, and advisories for Davidson County (TNC037) TN:\n'
@@ -103,7 +103,7 @@ describe('hubot-openweathermap', () => {
     it('hubot responds with message', () => {
       expect(room.messages).to.eql([
         ['alice', 'hubot weather 37206'],
-        ['hubot', 'Currently Clouds and 50F/10C in Nashville'],
+        ['hubot', 'Currently broken clouds and 50F/10C in Nashville'],
       ]);
     });
   });
@@ -128,7 +128,7 @@ describe('hubot-openweathermap', () => {
     it('hubot responds with message', () => {
       expect(room.messages).to.eql([
         ['alice', 'hubot weather seattle, WA'],
-        ['hubot', 'Currently Clouds and 47F/8C in Seattle'],
+        ['hubot', 'Currently scattered clouds and 47F/8C in Seattle'],
         [
           'hubot',
           'Current watches, warnings, and advisories for King County (WAC033) WA:\n'
@@ -143,7 +143,7 @@ describe('hubot-openweathermap', () => {
       nock('https://api.openweathermap.org')
         .get('/data/2.5/weather')
         .query({ q: 'seattle,WA,US', appid: 'abcdef' })
-        .replyWithError(new Error('Internal service error'));
+        .replyWithError(new Error('Mock internal service error'));
 
       room.user.say('alice', 'hubot weather seattle, WA');
       setTimeout(done, 100);
@@ -152,7 +152,7 @@ describe('hubot-openweathermap', () => {
     it('hubot responds with message', () => {
       expect(room.messages).to.eql([
         ['alice', 'hubot weather seattle, WA'],
-        ['hubot', 'Encountered error: Error: Internal service error'],
+        ['hubot', 'Encountered error: Error: Mock internal service error'],
       ]);
     });
   });
