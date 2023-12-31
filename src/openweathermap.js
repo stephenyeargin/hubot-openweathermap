@@ -13,6 +13,7 @@
 const dayjs = require('dayjs');
 const semver = require('semver');
 const { EmbedBuilder: DiscordEmbedBuilder } = require('discord.js');
+const hubotVersion = require('hubot/package.json').version || '0.0.0';
 
 module.exports = (robot) => {
   const baseUrl = 'https://api.openweathermap.org/data/2.5/weather';
@@ -129,7 +130,7 @@ module.exports = (robot) => {
       };
     }
     if (robot.adapterName && robot.adapterName.indexOf('discord') > -1) {
-      if (semver.lt(robot.parseVersion(), '11.0.0')) {
+      if (semver.lt(robot.parseVersion() || hubotVersion, '11.0.0')) {
         robot.logger.info('@stephenyeargin/hubot-openweathermap: Unable to use Discord embeds if Hubot < v11');
         return textFallback;
       }
@@ -232,7 +233,7 @@ module.exports = (robot) => {
       };
     }
     if (robot.adapterName && robot.adapterName.indexOf('discord') > -1) {
-      if (semver.lt(robot.parseVersion(), '11.0.0')) {
+      if (semver.lt(robot.parseVersion() || hubotVersion, '11.0.0')) {
         robot.logger.info('@stephenyeargin/hubot-openweathermap: Unable to use Discord embeds if Hubot < v11');
         return textFallback;
       }
