@@ -59,7 +59,7 @@ describe('hubot-openweathermap slack', () => {
                 author_link: 'https://openweathermap.org/',
                 author_name: 'OpenWeather',
                 color: '#eb6e4b',
-                fallback: 'Currently Clouds and 50F/10C in Nashville',
+                fallback: 'Currently broken clouds and 50F/10C in Nashville',
                 fields: [
                   {
                     short: true,
@@ -124,7 +124,7 @@ describe('hubot-openweathermap slack', () => {
                 author_link: 'https://openweathermap.org/',
                 author_name: 'OpenWeather',
                 color: '#eb6e4b',
-                fallback: 'Currently Clouds and 50F/10C in Nashville',
+                fallback: 'Currently broken clouds and 50F/10C in Nashville',
                 fields: [
                   {
                     short: true,
@@ -271,7 +271,7 @@ describe('hubot-openweathermap slack', () => {
                 author_link: 'https://openweathermap.org/',
                 author_name: 'OpenWeather',
                 color: '#eb6e4b',
-                fallback: 'Currently Clouds and 50F/10C in Nashville',
+                fallback: 'Currently broken clouds and 50F/10C in Nashville',
                 fields: [
                   {
                     short: true,
@@ -336,7 +336,7 @@ describe('hubot-openweathermap slack', () => {
                 author_link: 'https://openweathermap.org/',
                 author_name: 'OpenWeather',
                 color: '#eb6e4b',
-                fallback: 'Currently Clouds and 47F/8C in Seattle',
+                fallback: 'Currently scattered clouds and 47F/8C in Seattle',
                 fields: [
                   {
                     short: true,

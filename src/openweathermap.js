@@ -138,7 +138,7 @@ module.exports = (robot) => {
   };
 
   const formatWeather = (json) => {
-    const textFallback = `Currently ${json.weather[0].main} and ${formatUnits(json.main.temp, 'imperial')}F/${formatUnits(json.main.temp, 'metric')}C in ${json.name}`;
+    const textFallback = `Currently ${json.weather[0].description} and ${formatUnits(json.main.temp, 'imperial')}F/${formatUnits(json.main.temp, 'metric')}C in ${json.name}`;
     if (robot.adapterName && robot.adapterName.indexOf('slack') > -1) {
       return {
         attachments: [{

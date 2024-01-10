@@ -47,7 +47,7 @@ describe('hubot-openweathermap', () => {
     it('hubot responds with message', () => {
       expect(room.messages).to.eql([
         ['alice', 'hubot weather'],
-        ['hubot', 'Currently Clouds and 50F/10C in Nashville'],
+        ['hubot', 'Currently broken clouds and 50F/10C in Nashville'],
       ]);
     });
   });
@@ -72,7 +72,7 @@ describe('hubot-openweathermap', () => {
     it('hubot responds with message', () => {
       expect(room.messages).to.eql([
         ['alice', 'hubot weather'],
-        ['hubot', 'Currently Clouds and 50F/10C in Nashville'],
+        ['hubot', 'Currently broken clouds and 50F/10C in Nashville'],
         [
           'hubot',
           'Current watches, warnings, and advisories for Davidson County (TNC037) TN:\n'
@@ -103,7 +103,7 @@ describe('hubot-openweathermap', () => {
     it('hubot responds with message', () => {
       expect(room.messages).to.eql([
         ['alice', 'hubot weather 37206'],
-        ['hubot', 'Currently Clouds and 50F/10C in Nashville'],
+        ['hubot', 'Currently broken clouds and 50F/10C in Nashville'],
       ]);
     });
   });
@@ -128,7 +128,7 @@ describe('hubot-openweathermap', () => {
     it('hubot responds with message', () => {
       expect(room.messages).to.eql([
         ['alice', 'hubot weather seattle, WA'],
-        ['hubot', 'Currently Clouds and 47F/8C in Seattle'],
+        ['hubot', 'Currently scattered clouds and 47F/8C in Seattle'],
         [
           'hubot',
           'Current watches, warnings, and advisories for King County (WAC033) WA:\n'
