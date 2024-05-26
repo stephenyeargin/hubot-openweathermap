@@ -73,7 +73,7 @@ module.exports = (robot) => {
   const formatAlerts = (json) => {
     const output = [`${json.title}:`];
     json.features.forEach((alert) => {
-      output.push(`- ${alert.properties.headline}`);
+      output.push(`- ${alert.properties.headline} - https://alerts.weather.gov/search?id=${alert.properties.id}`);
     });
     const textFallback = output.join('\n');
     if (robot.adapterName && robot.adapterName.indexOf('slack') > -1) {
@@ -83,6 +83,7 @@ module.exports = (robot) => {
         author_name: 'Weather.gov',
         pretext: alert.properties.event,
         title: alert.properties.headline,
+        title_link: `https://alerts.weather.gov/search?id=${alert.properties.id}`,
         fallback: alert.properties.description,
         text: '```\n'
               + `${alert.properties.description}\n`

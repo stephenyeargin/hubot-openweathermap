@@ -76,8 +76,8 @@ describe('hubot-openweathermap', () => {
         [
           'hubot',
           'Current watches, warnings, and advisories for Davidson County (TNC037) TN:\n'
-          + '- Flood Advisory issued December 9 at 5:48PM CST until December 9 at 9:00PM CST by NWS Nashville TN\n'
-          + '- Tornado Watch issued December 9 at 5:38PM CST until December 9 at 7:00PM CST by NWS Nashville TN',
+          + '- Flood Advisory issued December 9 at 5:48PM CST until December 9 at 9:00PM CST by NWS Nashville TN - https://alerts.weather.gov/search?id=urn:oid:2.49.0.1.840.0.c047e1d6c0e2b6fd1a4c3a616d1f34ef22c8e76f.001.1\n'
+          + '- Tornado Watch issued December 9 at 5:38PM CST until December 9 at 7:00PM CST by NWS Nashville TN - https://alerts.weather.gov/search?id=urn:oid:2.49.0.1.840.0.72d8a168f0de2c1ff32e593870093279ea4e85e5.003.1',
         ],
       ]);
     });
@@ -132,7 +132,7 @@ describe('hubot-openweathermap', () => {
         [
           'hubot',
           'Current watches, warnings, and advisories for King County (WAC033) WA:\n'
-          + '- Wind Advisory issued December 26 at 3:52AM PST until December 27 at 1:00PM PST by NWS Seattle WA',
+          + '- Wind Advisory issued December 26 at 3:52AM PST until December 27 at 1:00PM PST by NWS Seattle WA - https://alerts.weather.gov/search?id=urn:oid:2.49.0.1.840.0.03c9a16ab3afeeb61c14b4af6207edf30654fcb6.002.1',
         ],
       ]);
     });
@@ -149,7 +149,7 @@ describe('hubot-openweathermap', () => {
       setTimeout(done, 100);
     });
 
-    it('hubot responds with message', () => {
+    it('hubot responds with error message', () => {
       expect(room.messages).to.eql([
         ['alice', 'hubot weather seattle, WA'],
         ['hubot', 'Encountered error: Error: Internal service error'],
