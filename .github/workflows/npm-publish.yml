@@ -6,6 +6,10 @@ name: npm-publish
 
 permissions:
   contents: write
+  packages: write
+
+env:
+  PACKAGE_NAME: "@stephenyeargin/hubot-openweathermap"
 
 jobs:
   publish:
@@ -17,10 +21,28 @@ jobs:
           node-version: "20"
       - run: npm ci
       - run: npm test
+      - name: Get current version
+        id: get_version
+        run: echo "::set-output name=version::$(node -p -e "require('./package.json').version")"
+      - name: Check if version has changed
+        id: version_check
+        run: |
+          LATEST_VERSION=$(npm show $PACKAGE_NAME version)
+          CURRENT_VERSION=${{ steps.get_version.outputs.version }}
+          echo "Latest version: $LATEST_VERSION"
+          echo "Current version: $CURRENT_VERSION"
+          if [ "$LATEST_VERSION" == "$CURRENT_VERSION" ]; then
+            echo "Version has not changed. Exiting."
+            exit 0
+          fi
       - uses: JS-DevTools/npm-publish@v3
         id: publish
         with:
           token: ${{ secrets.NPM_AUTH_TOKEN }}
+      - name: Publish to GitHub Packages
+        run: npm publish --registry=https://npm.pkg.github.com/
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - if: ${{ steps.publish.outputs.type }}
         name: Create Release
         env:
