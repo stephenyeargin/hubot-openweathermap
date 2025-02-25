@@ -49,31 +49,31 @@ jobs:
         run: |
           if [ "$LATEST_VERSION" == "$CURRENT_VERSION" ]; then
             echo "Version has not changed. Skipping publish."
-            echo "::set-output name=has_changed::false"
+            echo "has_changed=false" >> $GITHUB_ENV
           else
             echo "Version has changed. Proceeding with publish."
-            echo "::set-output name=has_changed::true"
+            echo "has_changed=true" >> $GITHUB_ENV
           fi
 
       # Publish to NPM and GitHub Packages (only if version has changed)
       - name: Publish to NPM and GitHub Packages
-        if: ${{ steps.version_check.outputs.has_changed == 'true' }}
+        if: ${{ env.has_changed == 'true' }}
         run: |
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" >> ~/.npmrc
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" >> ~/.npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> ~/.npmrc
           npm publish --registry=https://registry.npmjs.org/
           npm publish --registry=${{ env.GITHUB_REGISTRY }}
 
       # Tag the commit with the new version (only if version has changed)
       - name: Create Git tag for new version
-        if: ${{ steps.version_check.outputs.has_changed == 'true' }}
+        if: ${{ env.has_changed == 'true' }}
         run: |
           git tag -a "v${{ env.CURRENT_VERSION }}" -m "Release version ${{ env.CURRENT_VERSION }}"
           git push origin "v${{ env.CURRENT_VERSION }}"
 
       # Create release on GitHub (only if version has changed)
       - name: Create GitHub Release
-        if: ${{ steps.version_check.outputs.has_changed == 'true' }}
+        if: ${{ env.has_changed == 'true' }}
         run: |
           VERSION="v${{ env.CURRENT_VERSION }}"
           gh release create $VERSION --generate-notes --target main
