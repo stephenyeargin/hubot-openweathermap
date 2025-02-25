@@ -35,4 +35,4 @@ hubot> Currently scattered clouds and 49F/10C in Nashville
 
 ### Slack
 
-![screenshot](./screenshot.png)
+![screenshot](screenshot.png)
