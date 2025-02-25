@@ -82,6 +82,7 @@ jobs:
 
       # Create release on GitHub (only if version has changed)
       - name: Create a GitHub release
+        if: ${{ env.has_changed == 'true' }}
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.tag_version.outputs.new_tag }}
