@@ -10,7 +10,6 @@ permissions:
   packages: write
 
 env:
-  PACKAGE_NAME: "@stephenyeargin/hubot-openweathermap"
   NPM_REGISTRY: "https://npm.pkg.github.com/"
   GITHUB_REGISTRY: "https://npm.pkg.github.com/"
 
@@ -30,6 +29,13 @@ jobs:
       # Install dependencies and test
       - run: npm ci
       - run: npm test
+
+      # Get the PACKAGE_NAME from package.json
+      - name: Get PACKAGE_NAME from package.json
+        id: get_package_name
+        run: |
+          PACKAGE_NAME=$(jq -r '.name' package.json)
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
 
       # Get current version from package.json
       - name: Get current version from package.json
