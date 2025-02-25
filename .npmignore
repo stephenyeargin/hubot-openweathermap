@@ -1,0 +1,6 @@
+test/
+script/
+.husky/
+.github/
+.editorconfig
+.eslintrc.js
