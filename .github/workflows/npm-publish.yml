@@ -73,15 +73,17 @@ jobs:
       # Tag the commit with the new version (only if version has changed)
       - name: Create Git tag for new version
         if: ${{ env.has_changed == 'true' }}
-        run: |
-          git tag -a "v${{ env.CURRENT_VERSION }}" -m "Release version ${{ env.CURRENT_VERSION }}"
-          git push origin "v${{ env.CURRENT_VERSION }}"
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag_prefix: 'v'
+          custom_tag: ${{ env.CURRENT_VERSION }}
 
       # Create release on GitHub (only if version has changed)
-      - name: Create GitHub Release
-        if: ${{ env.has_changed == 'true' }}
-        run: |
-          VERSION="v${{ env.CURRENT_VERSION }}"
-          gh release create $VERSION --generate-notes --target main
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create a GitHub release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.tag_version.outputs.new_tag }}
+          name: Release ${{ steps.tag_version.outputs.new_tag }}
+          body: ${{ steps.tag_version.outputs.changelog }}
