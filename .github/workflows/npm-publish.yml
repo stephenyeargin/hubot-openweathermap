@@ -1,8 +1,9 @@
+name: Publish Package
+
 on:
   push:
-    branches: main
-
-name: npm-publish
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -10,43 +11,71 @@ permissions:
 
 env:
   PACKAGE_NAME: "@stephenyeargin/hubot-openweathermap"
+  NPM_REGISTRY: "https://npm.pkg.github.com/"
+  GITHUB_REGISTRY: "https://npm.pkg.github.com/"
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+
     steps:
+      # Checkout the code
       - uses: actions/checkout@v4
+
+      # Set up Node.js
       - uses: actions/setup-node@v3
         with:
-          node-version: "20"
+          node-version: '20'
+
+      # Install dependencies and test
       - run: npm ci
       - run: npm test
-      - name: Get current version
+
+      # Get current version from package.json
+      - name: Get current version from package.json
         id: get_version
-        run: echo "::set-output name=version::$(node -p -e "require('./package.json').version")"
+        run: echo "CURRENT_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+
+      # Get the latest published version from NPM
+      - name: Get latest version from NPM
+        id: latest_npm_version
+        run: |
+          LATEST_VERSION=$(npm show $PACKAGE_NAME version)
+          echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_ENV
+
+      # Check if version has changed and set output
       - name: Check if version has changed
         id: version_check
         run: |
-          LATEST_VERSION=$(npm show $PACKAGE_NAME version)
-          CURRENT_VERSION=${{ steps.get_version.outputs.version }}
-          echo "Latest version: $LATEST_VERSION"
-          echo "Current version: $CURRENT_VERSION"
           if [ "$LATEST_VERSION" == "$CURRENT_VERSION" ]; then
-            echo "Version has not changed. Exiting."
-            exit 0
+            echo "Version has not changed. Skipping publish."
+            echo "::set-output name=has_changed::false"
+          else
+            echo "Version has changed. Proceeding with publish."
+            echo "::set-output name=has_changed::true"
           fi
-      - uses: JS-DevTools/npm-publish@v3
-        id: publish
-        with:
-          token: ${{ secrets.NPM_AUTH_TOKEN }}
-      - name: Publish to GitHub Packages
-        run: npm publish --registry=https://npm.pkg.github.com/
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - if: ${{ steps.publish.outputs.type }}
-        name: Create Release
-        env:
-          GH_TOKEN: ${{ github.token }}
+
+      # Publish to NPM and GitHub Packages (only if version has changed)
+      - name: Publish to NPM and GitHub Packages
+        if: ${{ steps.version_check.outputs.has_changed == 'true' }}
         run: |
-          VERSION="v${{ steps.publish.outputs.version }}"
-          gh release create $VERSION --generate-notes
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" >> ~/.npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" >> ~/.npmrc
+          npm publish --registry=https://registry.npmjs.org/
+          npm publish --registry=${{ env.GITHUB_REGISTRY }}
+
+      # Tag the commit with the new version (only if version has changed)
+      - name: Create Git tag for new version
+        if: ${{ steps.version_check.outputs.has_changed == 'true' }}
+        run: |
+          git tag -a "v${{ env.CURRENT_VERSION }}" -m "Release version ${{ env.CURRENT_VERSION }}"
+          git push origin "v${{ env.CURRENT_VERSION }}"
+
+      # Create release on GitHub (only if version has changed)
+      - name: Create GitHub Release
+        if: ${{ steps.version_check.outputs.has_changed == 'true' }}
+        run: |
+          VERSION="v${{ env.CURRENT_VERSION }}"
+          gh release create $VERSION --generate-notes --target main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
