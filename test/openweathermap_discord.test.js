@@ -499,7 +499,7 @@ describe('hubot-openweathermap discord legacy', () => {
         [
           'hubot',
           'Current watches, warnings, and advisories for King County (WAC033) WA:\n'
-          + '- Wind Advisory issued December 26 at 3:52AM PST until December 27 at 1:00PM PST by NWS Seattle WA',
+          + '- Wind Advisory issued December 26 at 3:52AM PST until December 27 at 1:00PM PST by NWS Seattle WA - https://alerts.weather.gov/search?id=urn:oid:2.49.0.1.840.0.03c9a16ab3afeeb61c14b4af6207edf30654fcb6.002.1',
         ],
       ]);
     });
