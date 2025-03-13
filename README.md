@@ -22,7 +22,7 @@ Then add **@stephenyeargin/hubot-openweathermap** to your `external-scripts.json
 
 | Environment Variables    | Required? | Description                              |
 | ------------------------ | :-------: | ---------------------------------------- |
-| `HUBOT_OPEN_WEATHER_MAP_API_KEY`  | Yes       | API key from the developer console       |
+| `HUBOT_OPEN_WEATHER_MAP_API_KEY`  | Yes | API key from the developer console |
 | `HUBOT_DEFAULT_LATITUDE` | No | Latitude for default query of `hubot weather` |
 | `HUBOT_DEFAULT_LONGITUDE` | No | Longitude for default query of `hubot weather` |
 

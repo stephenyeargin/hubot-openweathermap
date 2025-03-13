@@ -143,7 +143,7 @@ describe('hubot-openweathermap', () => {
       nock('https://api.openweathermap.org')
         .get('/data/2.5/weather')
         .query({ q: 'seattle,WA,US', appid: 'abcdef' })
-        .replyWithError(new Error('Internal service error'));
+        .replyWithError(new Error('Mock internal service error'));
 
       room.user.say('alice', 'hubot weather seattle, WA');
       setTimeout(done, 100);
@@ -152,7 +152,7 @@ describe('hubot-openweathermap', () => {
     it('hubot responds with error message', () => {
       expect(room.messages).to.eql([
         ['alice', 'hubot weather seattle, WA'],
-        ['hubot', 'Encountered error: Error: Internal service error'],
+        ['hubot', 'Encountered error: Error: Mock internal service error'],
       ]);
     });
   });

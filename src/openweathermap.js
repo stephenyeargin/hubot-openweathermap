@@ -11,11 +11,20 @@
 //   HUBOT_DEFAULT_LONGITUDE - Default longitude for Hubot interactions
 
 const dayjs = require('dayjs');
+const semver = require('semver');
+const { EmbedBuilder: DiscordEmbedBuilder } = require('discord.js');
+// eslint-disable-next-line global-require
+const hubotVersion = require('hubot/package.json').version || '0.0.0';
 
 module.exports = (robot) => {
   const baseUrl = 'https://api.openweathermap.org/data/2.5/weather';
   const baseUrlNWS = 'https://api.weather.gov';
 
+  /**
+   * Get Severity Color
+   * @param {string} severity NWS severity scale
+   * @returns string
+   */
   const getSeverityColor = (severity) => {
     switch (severity.toLowerCase()) {
       case 'extreme':
@@ -31,11 +40,17 @@ module.exports = (robot) => {
     }
   };
 
+  /**
+   * Get Forecast
+   * @param {string} query City or zip code search
+   * @param {function} callback Arguments: Error, Response Object
+   * @return void
+   */
   const getForecast = (query, callback) => {
     query.appid = process.env.HUBOT_OPEN_WEATHER_MAP_API_KEY;
     robot.http(baseUrl)
       .query(query)
-      .get()((err, res, body) => {
+      .get()((err, _res, body) => {
         if (err) {
           callback(err);
           return;
@@ -49,8 +64,17 @@ module.exports = (robot) => {
       });
   };
 
+  /**
+   * Get Alerts
+   * @param {object} query Geo coordinates for alert location as { latitude, longitude }
+   * @param {function} callback Arguments: Error, Response Object
+   * @returns void
+   */
   const getAlerts = (query, callback) => robot.http(`${baseUrlNWS}/points/${query.latitude},${query.longitude}`)
-    .get()((err1, res1, body1) => {
+    .headers({
+      'User-agent': '@stephenyeargin/hubot-openweathermap <hubot@yearg.in>',
+    })
+    .get()((err1, _res1, body1) => {
       if (err1) {
         callback(err1);
         return;
@@ -59,7 +83,10 @@ module.exports = (robot) => {
       const countyCode = pointJSON.properties.county.match(/.*\/(\w+)$/)[1];
 
       robot.http(`${baseUrlNWS}/alerts/active/zone/${countyCode}`)
-        .get()((err2, res2, body2) => {
+        .headers({
+          'User-agent': '@stephenyeargin/hubot-openweathermap <hubot@yearg.in>',
+        })
+        .get()((err2, _res2, body2) => {
           if (err2) {
             callback(err2);
             return;
@@ -70,6 +97,11 @@ module.exports = (robot) => {
         });
     });
 
+  /**
+   * Format Alerts
+   * @param {object} json Alert API response object
+   * @returns string|object Return format based on Hubot adapter
+   */
   const formatAlerts = (json) => {
     const output = [`${json.title}:`];
     json.features.forEach((alert) => {
@@ -111,6 +143,7 @@ module.exports = (robot) => {
             short: false,
           },
         ],
+        footer: 'Alerts provided by the National Weather Service',
         color: getSeverityColor(alert.properties.severity),
         ts: dayjs(alert.properties.sent).unix(),
       }));
@@ -120,9 +153,60 @@ module.exports = (robot) => {
         attachments,
       };
     }
+    if (robot.adapterName && robot.adapterName.indexOf('discord') > -1) {
+      if (semver.lt(robot.parseVersion() || hubotVersion, '11.0.0')) {
+        robot.logger.info('@stephenyeargin/hubot-openweathermap: Unable to use Discord embeds if Hubot < v11');
+        return textFallback;
+      }
+      const embeds = json.features.map((alert) => new DiscordEmbedBuilder()
+        .setTitle(alert.properties.headline)
+        .setColor(getSeverityColor(alert.properties.severity))
+        .setTimestamp(new Date(alert.properties.sent))
+        .setAuthor({
+          name: 'Weather.gov',
+          url: 'https://weather.gov/',
+          iconURL: 'https://github.com/NOAAGov.png',
+        })
+        .setDescription('```\n'
+        + `${alert.properties.description}\n`
+        + '```')
+        .addFields(
+          {
+            name: 'Severity',
+            value: alert.properties.severity,
+            inline: true,
+          },
+          {
+            name: 'Certainty',
+            value: alert.properties.certainty,
+            inline: true,
+          },
+          {
+            name: 'Areas Affected',
+            value: alert.properties.areaDesc,
+            inline: false,
+          },
+          {
+            name: 'Instructions / Response',
+            value: alert.properties.instruction || alert.properties.response,
+            inline: false,
+          },
+        )
+        .setFooter({
+          text: 'Alerts provided by the National Weather Service',
+          iconURL: 'https://github.com/NOAAGov.png',
+        }));
+      return { embeds };
+    }
     return textFallback;
   };
 
+  /**
+   *
+   * @param {float} value Raw value from API
+   * @param {string} unit Desired measurement (metric, imperial)
+   * @returns
+   */
   const formatUnits = (value, unit) => {
     let output;
     switch (unit) {
@@ -138,6 +222,11 @@ module.exports = (robot) => {
     return output.toFixed(0);
   };
 
+  /**
+   *
+   * @param {object} json Response object from API
+   * @returns string|object Return format based on Hubot adapter
+   */
   const formatWeather = (json) => {
     const textFallback = `Currently ${json.weather[0].description} and ${formatUnits(json.main.temp, 'imperial')}F/${formatUnits(json.main.temp, 'metric')}C in ${json.name}`;
     if (robot.adapterName && robot.adapterName.indexOf('slack') > -1) {
@@ -178,9 +267,59 @@ module.exports = (robot) => {
         }],
       };
     }
+    if (robot.adapterName && robot.adapterName.indexOf('discord') > -1) {
+      if (semver.lt(robot.parseVersion() || hubotVersion, '11.0.0')) {
+        robot.logger.info('@stephenyeargin/hubot-openweathermap: Unable to use Discord embeds if Hubot < v11');
+        return textFallback;
+      }
+
+      const embed = new DiscordEmbedBuilder()
+        .setTitle(`Weather in ${json.name}`)
+        .setURL(`https://openweathermap.org/weathermap?zoom=12&lat=${json.coord.lat}&lon=${json.coord.lon}`)
+        .setAuthor({
+          name: 'OpenWeather',
+          url: 'https://openweathermap.org/',
+          iconURL: 'https://github.com/openweathermap.png',
+        })
+        .addFields(
+          {
+            name: 'Conditions',
+            value: `${json.weather[0].main} (${json.weather[0].description})`,
+            inline: true,
+          },
+          {
+            name: 'Temperature',
+            value: `${formatUnits(json.main.temp, 'imperial')}F/${formatUnits(json.main.temp, 'metric')}C`,
+            inline: true,
+          },
+          {
+            name: 'Feels Like',
+            value: `${formatUnits(json.main.feels_like, 'imperial')}F/${formatUnits(json.main.feels_like, 'metric')}C`,
+            inline: true,
+          },
+          {
+            name: 'Humidity',
+            value: `${json.main.humidity}%`,
+            inline: true,
+          },
+        )
+        .setThumbnail(`https://openweathermap.org/img/wn/${json.weather[0].icon}@4x.png`)
+        .setColor('#eb6e4b')
+        .setFooter({
+          text: 'Weather data provided by OpenWeather',
+          iconURL: 'https://github.com/openweathermap.png',
+        })
+        .setTimestamp(new Date(json.dt * 1000));
+      return { embeds: [embed] };
+    }
     return textFallback;
   };
 
+  /**
+   *
+   * @param {object|string} err Stringable object or string representing error
+   * @param {*} msg
+   */
   const handleError = (err, msg) => {
     robot.logger.error(err);
     msg.send(`Encountered error: ${err}`);
@@ -206,6 +345,7 @@ module.exports = (robot) => {
         handleError(err1, msg);
         return;
       }
+      robot.logger.debug(forecastData);
       msg.send(formatWeather(forecastData));
 
       getAlerts({
@@ -216,7 +356,7 @@ module.exports = (robot) => {
           handleError(err2, msg);
           return;
         }
-        robot.logger.info(alertData);
+        robot.logger.debug(alertData);
         if (alertData.features.length > 0) {
           msg.send(formatAlerts(alertData));
         }
@@ -230,7 +370,6 @@ module.exports = (robot) => {
       msg.send('No API Key configured.');
       return;
     }
-
     const zipCode = msg.match[1];
 
     getForecast({
@@ -240,6 +379,7 @@ module.exports = (robot) => {
         handleError(err1, msg);
         return;
       }
+      robot.logger.debug(forecastData);
       msg.send(formatWeather(forecastData));
 
       getAlerts({
@@ -277,9 +417,8 @@ module.exports = (robot) => {
         handleError(err1, msg);
         return;
       }
-
+      robot.logger.debug(forecastData);
       msg.send(formatWeather(forecastData));
-
       getAlerts({
         latitude: forecastData.coord.lat,
         longitude: forecastData.coord.lon,
@@ -288,7 +427,7 @@ module.exports = (robot) => {
           handleError(err2, msg);
           return;
         }
-        robot.logger.info(alertData);
+        robot.logger.debug(alertData);
         if (alertData.features.length > 0) {
           msg.send(formatAlerts(alertData));
         }
