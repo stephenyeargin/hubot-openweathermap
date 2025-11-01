@@ -108,7 +108,7 @@ module.exports = (robot) => {
       output.push(`- ${alert.properties.headline} - https://alerts.weather.gov/search?id=${alert.properties.id}`);
     });
     const textFallback = output.join('\n');
-    if (robot.adapterName && robot.adapterName.indexOf('slack') > -1) {
+    if (/slack/i.test(robot.adapterName)) {
       const attachments = json.features.map((alert) => ({
         author_icon: 'https://github.com/NOAAGov.png',
         author_link: 'https://weather.gov/',
@@ -229,7 +229,7 @@ module.exports = (robot) => {
    */
   const formatWeather = (json) => {
     const textFallback = `Currently ${json.weather[0].description} and ${formatUnits(json.main.temp, 'imperial')}F/${formatUnits(json.main.temp, 'metric')}C in ${json.name}`;
-    if (robot.adapterName && robot.adapterName.indexOf('slack') > -1) {
+    if (/slack/i.test(robot.adapterName)) {
       return {
         attachments: [{
           title: `Weather in ${json.name}`,
