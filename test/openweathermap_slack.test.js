@@ -313,7 +313,7 @@ describe('hubot-openweathermap slack', () => {
     beforeEach((done) => {
       nock('https://api.openweathermap.org')
         .get('/data/2.5/weather')
-        .query({ q: 'seattle,WA,US', appid: 'abcdef' })
+        .query({ q: 'seattle,WA', appid: 'abcdef' })
         .replyWithFile(200, './test/fixtures/api.openweathermap.org-data-2.5-weather-seattle.json');
       nock('https://api.weather.gov')
         .get('/points/47.6038,-122.3301')
