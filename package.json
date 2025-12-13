@@ -36,6 +36,8 @@
   },
   "main": "index.js",
   "scripts": {
+    "lint": "eslint ./src",
+    "lint:fix": "eslint ./src --fix",
     "test": "script/test",
     "prepare": "husky install"
   },
