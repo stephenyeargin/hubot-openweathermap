@@ -80,6 +80,14 @@ module.exports = (robot) => {
         return;
       }
       const pointJSON = JSON.parse(body1);
+
+      // Check if the response contains valid properties (e.g., not a 404 error response)
+      if (!pointJSON.properties || !pointJSON.properties.county) {
+        // Location is outside US or invalid
+        callback(null, { features: [] });
+        return;
+      }
+
       const countyCode = pointJSON.properties.county.match(/.*\/(\w+)$/)[1];
 
       robot.http(`${baseUrlNWS}/alerts/active/zone/${countyCode}`)
@@ -407,11 +415,11 @@ module.exports = (robot) => {
 
     const cityName = msg.match[1];
     const state = msg.match[2].toUpperCase();
-    const country = msg.match[3] ? msg.match[3].toUpperCase() : 'US';
+    const country = msg.match[3] ? msg.match[3].toUpperCase() : '';
     robot.logger.debug(cityName, state);
 
     getForecast({
-      q: `${cityName},${state},${country}`,
+      q: `${cityName},${state}${country ? `,${country}` : ''}`,
     }, (err1, forecastData) => {
       if (err1) {
         handleError(err1, msg);

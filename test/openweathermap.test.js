@@ -113,7 +113,7 @@ describe('hubot-openweathermap', () => {
     beforeEach((done) => {
       nock('https://api.openweathermap.org')
         .get('/data/2.5/weather')
-        .query({ q: 'seattle,WA,US', appid: 'abcdef' })
+        .query({ q: 'seattle,WA', appid: 'abcdef' })
         .replyWithFile(200, './test/fixtures/api.openweathermap.org-data-2.5-weather-seattle.json');
       nock('https://api.weather.gov')
         .get('/points/47.6038,-122.3301')
@@ -140,11 +140,40 @@ describe('hubot-openweathermap', () => {
     });
   });
 
+  context('get weather for location outside US', () => {
+    beforeEach((done) => {
+      nock('https://api.openweathermap.org')
+        .get('/data/2.5/weather')
+        .query({ q: 'London,UK', appid: 'abcdef' })
+        .replyWithFile(200, './test/fixtures/api.openweathermap.org-data-2.5-weather-seattle.json');
+      nock('https://api.weather.gov')
+        .get('/points/47.6038,-122.3301')
+        .reply(404, {
+          correlationId: 'cd6b5ab',
+          title: 'Data Unavailable For Requested Point',
+          type: 'https://api.weather.gov/problems/InvalidPoint',
+          status: 404,
+          detail: 'Unable to provide data for requested point 51.5072,-0.1275',
+          instance: 'https://api.weather.gov/requests/cd6b5ab',
+        });
+
+      room.user.say('alice', 'hubot weather London, UK');
+      setTimeout(done, 100);
+    });
+
+    it('hubot responds with weather but no alerts', () => {
+      expect(room.messages).to.eql([
+        ['alice', 'hubot weather London, UK'],
+        ['hubot', 'Currently scattered clouds and 47F/8C in Seattle'],
+      ]);
+    });
+  });
+
   context('handle API error', () => {
     beforeEach((done) => {
       nock('https://api.openweathermap.org')
         .get('/data/2.5/weather')
-        .query({ q: 'seattle,WA,US', appid: 'abcdef' })
+        .query({ q: 'seattle,WA', appid: 'abcdef' })
         .replyWithError(new Error('Mock internal service error'));
 
       room.user.say('alice', 'hubot weather seattle, WA');
