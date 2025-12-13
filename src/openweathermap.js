@@ -103,9 +103,9 @@ module.exports = (robot) => {
    * @returns string|object Return format based on Hubot adapter
    */
   const formatAlerts = (json) => {
-    const output = [`${json.title}:`];
+    const output = [`${json.title}:`, 'See https://weather.gov for details.'];
     json.features.forEach((alert) => {
-      output.push(`- ${alert.properties.headline} - https://alerts.weather.gov/search?id=${alert.properties.id}`);
+      output.push(`- ${alert.properties.headline}`);
     });
     const textFallback = output.join('\n');
     if (/slack/i.test(robot.adapterName)) {
@@ -115,7 +115,7 @@ module.exports = (robot) => {
         author_name: 'Weather.gov',
         pretext: alert.properties.event,
         title: alert.properties.headline,
-        title_link: `https://alerts.weather.gov/search?id=${alert.properties.id}`,
+        // Link removed because alerts.weather.gov is no longer available
         fallback: alert.properties.description,
         text: '```\n'
               + `${alert.properties.description}\n`
