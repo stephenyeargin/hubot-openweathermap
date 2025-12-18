@@ -31,6 +31,7 @@
     "husky": "^8.0.3",
     "mocha": "^10.2.0",
     "nock": "^13.4.0",
+    "nyc": "^15.1.0",
     "sinon": "^17.0.1",
     "sinon-chai": "^3.7.0"
   },
@@ -40,6 +41,24 @@
     "lint:fix": "eslint ./src --fix",
     "test": "script/test",
     "prepare": "husky install"
+  },
+  "nyc": {
+    "reporter": [
+      "text",
+      "text-summary"
+    ],
+    "exclude": [
+      "test/**",
+      "script/**",
+      "node_modules/**"
+    ],
+    "extension": [
+      ".js"
+    ],
+    "all": true,
+    "include": [
+      "src/**/*.js"
+    ]
   },
   "volta": {
     "node": "18.19.0"

@@ -52,6 +52,32 @@ describe('hubot-openweathermap', () => {
     });
   });
 
+  context('handle alert API error for configured coordinates', () => {
+    beforeEach((done) => {
+      nock('https://api.openweathermap.org')
+        .get('/data/2.5/weather')
+        .query({ lat: '36.1798', lon: '-86.7411', appid: 'abcdef' })
+        .replyWithFile(200, './test/fixtures/api.openweathermap.org-data-2.5-weather-37206.json');
+      nock('https://api.weather.gov')
+        .get('/points/36.1798,-86.7411')
+        .replyWithFile(200, './test/fixtures/weather.gov-points-36.1798--86.7411.geojson');
+      nock('https://api.weather.gov')
+        .get('/alerts/active/zone/TNC037')
+        .replyWithError(new Error('Mock alerts error'));
+
+      room.user.say('alice', 'hubot weather');
+      setTimeout(done, 100);
+    });
+
+    it('hubot responds with weather then alert error', () => {
+      expect(room.messages).to.eql([
+        ['alice', 'hubot weather'],
+        ['hubot', 'Currently broken clouds and 50F/10C in Nashville'],
+        ['hubot', 'Encountered error: Error: Mock alerts error'],
+      ]);
+    });
+  });
+
   context('get weather for configured coordinates with active alerts', () => {
     beforeEach((done) => {
       nock('https://api.openweathermap.org')
@@ -109,11 +135,37 @@ describe('hubot-openweathermap', () => {
     });
   });
 
+  context('handle alert API error for a zip code', () => {
+    beforeEach((done) => {
+      nock('https://api.openweathermap.org')
+        .get('/data/2.5/weather')
+        .query({ zip: 37206, appid: 'abcdef' })
+        .replyWithFile(200, './test/fixtures/api.openweathermap.org-data-2.5-weather-37206.json');
+      nock('https://api.weather.gov')
+        .get('/points/36.1798,-86.7411')
+        .replyWithFile(200, './test/fixtures/weather.gov-points-36.1798--86.7411.geojson');
+      nock('https://api.weather.gov')
+        .get('/alerts/active/zone/TNC037')
+        .replyWithError(new Error('Mock alerts error'));
+
+      room.user.say('alice', 'hubot weather 37206');
+      setTimeout(done, 100);
+    });
+
+    it('hubot responds with weather then alert error', () => {
+      expect(room.messages).to.eql([
+        ['alice', 'hubot weather 37206'],
+        ['hubot', 'Currently broken clouds and 50F/10C in Nashville'],
+        ['hubot', 'Encountered error: Error: Mock alerts error'],
+      ]);
+    });
+  });
+
   context('get weather for a city', () => {
     beforeEach((done) => {
       nock('https://api.openweathermap.org')
         .get('/data/2.5/weather')
-        .query({ q: 'seattle,WA', appid: 'abcdef' })
+        .query({ q: 'seattle,WA,US', appid: 'abcdef' })
         .replyWithFile(200, './test/fixtures/api.openweathermap.org-data-2.5-weather-seattle.json');
       nock('https://api.weather.gov')
         .get('/points/47.6038,-122.3301')
@@ -136,6 +188,32 @@ describe('hubot-openweathermap', () => {
           + 'See https://weather.gov for details.\n'
           + '- Wind Advisory issued December 26 at 3:52AM PST until December 27 at 1:00PM PST by NWS Seattle WA',
         ],
+      ]);
+    });
+  });
+
+  context('handle alert API error for a city', () => {
+    beforeEach((done) => {
+      nock('https://api.openweathermap.org')
+        .get('/data/2.5/weather')
+        .query({ q: 'seattle,WA,US', appid: 'abcdef' })
+        .replyWithFile(200, './test/fixtures/api.openweathermap.org-data-2.5-weather-seattle.json');
+      nock('https://api.weather.gov')
+        .get('/points/47.6038,-122.3301')
+        .replyWithFile(200, './test/fixtures/weather.gov-points-47.6038--122.3301.geojson');
+      nock('https://api.weather.gov')
+        .get('/alerts/active/zone/WAC033')
+        .replyWithError(new Error('Mock alerts error'));
+
+      room.user.say('alice', 'hubot weather seattle, WA');
+      setTimeout(done, 100);
+    });
+
+    it('hubot responds with weather then alert error', () => {
+      expect(room.messages).to.eql([
+        ['alice', 'hubot weather seattle, WA'],
+        ['hubot', 'Currently scattered clouds and 47F/8C in Seattle'],
+        ['hubot', 'Encountered error: Error: Mock alerts error'],
       ]);
     });
   });
@@ -173,7 +251,7 @@ describe('hubot-openweathermap', () => {
     beforeEach((done) => {
       nock('https://api.openweathermap.org')
         .get('/data/2.5/weather')
-        .query({ q: 'seattle,WA', appid: 'abcdef' })
+        .query({ q: 'seattle,WA,US', appid: 'abcdef' })
         .replyWithError(new Error('Mock internal service error'));
 
       room.user.say('alice', 'hubot weather seattle, WA');
@@ -184,6 +262,69 @@ describe('hubot-openweathermap', () => {
       expect(room.messages).to.eql([
         ['alice', 'hubot weather seattle, WA'],
         ['hubot', 'Encountered error: Error: Mock internal service error'],
+      ]);
+    });
+  });
+
+  context('friendly message when city not found (city/state)', () => {
+    beforeEach((done) => {
+      nock('https://api.openweathermap.org')
+        .get('/data/2.5/weather')
+        .query({ q: 'nowhere,ZZ', appid: 'abcdef' })
+        .reply(200, { cod: 404, message: 'city not found' });
+
+      room.user.say('alice', 'hubot weather nowhere, ZZ');
+      setTimeout(done, 100);
+    });
+
+    it('hubot responds with friendly not-found message', () => {
+      expect(room.messages).to.eql([
+        ['alice', 'hubot weather nowhere, ZZ'],
+        ['hubot', 'Sorry, I couldn\'t find that location. Try a zip code or "City, ST[, Country]".'],
+      ]);
+    });
+  });
+
+  context('friendly message when city not found (zip)', () => {
+    beforeEach((done) => {
+      nock('https://api.openweathermap.org')
+        .get('/data/2.5/weather')
+        .query({ zip: 99999, appid: 'abcdef' })
+        .reply(200, { cod: 404, message: 'city not found' });
+
+      room.user.say('alice', 'hubot weather 99999');
+      setTimeout(done, 100);
+    });
+
+    it('hubot responds with friendly not-found message', () => {
+      expect(room.messages).to.eql([
+        ['alice', 'hubot weather 99999'],
+        ['hubot', 'Sorry, I couldn\'t find that location. Try a zip code or "City, ST[, Country]".'],
+      ]);
+    });
+  });
+
+  context('get weather for a city with spelled-out state', () => {
+    beforeEach((done) => {
+      nock('https://api.openweathermap.org')
+        .get('/data/2.5/weather')
+        .query({ q: 'nashville,TN,US', appid: 'abcdef' })
+        .replyWithFile(200, './test/fixtures/api.openweathermap.org-data-2.5-weather-37206.json');
+      nock('https://api.weather.gov')
+        .get('/points/36.1798,-86.7411')
+        .replyWithFile(200, './test/fixtures/weather.gov-points-36.1798--86.7411.geojson');
+      nock('https://api.weather.gov')
+        .get('/alerts/active/zone/TNC037')
+        .replyWithFile(200, './test/fixtures/weather.gov-alerts-active-zone-TNC037-none.geojson');
+
+      room.user.say('alice', 'hubot weather nashville, tennessee');
+      setTimeout(done, 100);
+    });
+
+    it('hubot responds with message', () => {
+      expect(room.messages).to.eql([
+        ['alice', 'hubot weather nashville, tennessee'],
+        ['hubot', 'Currently broken clouds and 50F/10C in Nashville'],
       ]);
     });
   });

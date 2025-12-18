@@ -19,6 +19,78 @@ const hubotVersion = require('hubot/package.json').version || '0.0.0';
 module.exports = (robot) => {
   const baseUrl = 'https://api.openweathermap.org/data/2.5/weather';
   const baseUrlNWS = 'https://api.weather.gov';
+  // Default to US when a two-letter US state is provided without country code
+  const US_STATES = new Set([
+    'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+    'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+    'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+    'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+    'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
+    'DC',
+  ]);
+  // Map full US state names to their two-letter abbreviations
+  const US_STATE_NAME_TO_ABBR = {
+    alabama: 'AL',
+    alaska: 'AK',
+    arizona: 'AZ',
+    arkansas: 'AR',
+    california: 'CA',
+    colorado: 'CO',
+    connecticut: 'CT',
+    delaware: 'DE',
+    florida: 'FL',
+    georgia: 'GA',
+    hawaii: 'HI',
+    idaho: 'ID',
+    illinois: 'IL',
+    indiana: 'IN',
+    iowa: 'IA',
+    kansas: 'KS',
+    kentucky: 'KY',
+    louisiana: 'LA',
+    maine: 'ME',
+    maryland: 'MD',
+    massachusetts: 'MA',
+    michigan: 'MI',
+    minnesota: 'MN',
+    mississippi: 'MS',
+    missouri: 'MO',
+    montana: 'MT',
+    nebraska: 'NE',
+    nevada: 'NV',
+    'new hampshire': 'NH',
+    'new jersey': 'NJ',
+    'new mexico': 'NM',
+    'new york': 'NY',
+    'north carolina': 'NC',
+    'north dakota': 'ND',
+    ohio: 'OH',
+    oklahoma: 'OK',
+    oregon: 'OR',
+    pennsylvania: 'PA',
+    'rhode island': 'RI',
+    'south carolina': 'SC',
+    'south dakota': 'SD',
+    tennessee: 'TN',
+    texas: 'TX',
+    utah: 'UT',
+    vermont: 'VT',
+    virginia: 'VA',
+    washington: 'WA',
+    'west virginia': 'WV',
+    wisconsin: 'WI',
+    wyoming: 'WY',
+    'district of columbia': 'DC',
+    'd.c.': 'DC',
+    dc: 'DC',
+  };
+  // Regex to accept "City, ST" or full state names
+  // Optional country code requires a preceding comma
+  const CITY_STATE_COUNTRY_REGEX = new RegExp(
+    'weather ([\\w ]+),\\s*([A-Za-z ]+?)(?=\\s*(?:,|$))'
+    + '(?:\\s*,\\s*([A-Za-z]{2,3}))?',
+    'i',
+  );
 
   /**
    * Get Severity Color
@@ -332,6 +404,11 @@ module.exports = (robot) => {
    */
   const handleError = (err, msg) => {
     robot.logger.error(err);
+    const isCityNotFound = (typeof err === 'string') && /city not found/i.test(err);
+    if (isCityNotFound) {
+      msg.send('Sorry, I couldn\'t find that location. Try a zip code or "City, ST[, Country]".');
+      return;
+    }
     msg.send(`Encountered error: ${err}`);
   };
 
@@ -409,15 +486,23 @@ module.exports = (robot) => {
   });
 
   // Search by city name
-  robot.respond(/weather ([\w ]+),(?:\s)?(\w{2})\s?(\w{2,3})?/i, (msg) => {
+  robot.respond(CITY_STATE_COUNTRY_REGEX, (msg) => {
     if (!process.env.HUBOT_OPEN_WEATHER_MAP_API_KEY) {
       msg.send('No API Key configured.');
       return;
     }
 
     const cityName = msg.match[1];
-    const state = msg.match[2].toUpperCase();
-    const country = msg.match[3] ? msg.match[3].toUpperCase() : '';
+    const rawState = msg.match[2].trim();
+    const state = rawState.length === 2
+      ? rawState.toUpperCase()
+      : (US_STATE_NAME_TO_ABBR[rawState.toLowerCase()] || rawState.toUpperCase());
+    let country = '';
+    if (msg.match[3]) {
+      country = msg.match[3].toUpperCase();
+    } else if (US_STATES.has(state)) {
+      country = 'US';
+    }
     robot.logger.debug(cityName, state);
 
     getForecast({
