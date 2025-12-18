@@ -1,7 +1,7 @@
 {
   "name": "@stephenyeargin/hubot-openweathermap",
   "description": "Retrieves the current conditions for a configured location or by query",
-  "version": "1.2.7",
+  "version": "1.2.8",
   "author": "Stephen Yeargin <stephen@yearg.in>",
   "homepage": "https://github.com/stephenyeargin/hubot-openweathermap",
   "license": "MIT",
