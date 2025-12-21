@@ -1,0 +1,21 @@
+[
+    {
+        "name": "Nashville-Davidson",
+        "local_names": {
+            "ta": "நாஷ்வில்",
+            "pl": "Nashville",
+            "eo": "Naŝvilo",
+            "en": "Nashville-Davidson",
+            "uk": "Нашвілл",
+            "lt": "Nešvilis",
+            "ru": "Нашвилл",
+            "ja": "ナッシュビル",
+            "ar": "ناشفيل-ديفيدسون",
+            "zh": "纳什维尔 / 納許維爾 / 納士維"
+        },
+        "lat": 36.1622767,
+        "lon": -86.7742984,
+        "country": "US",
+        "state": "Tennessee"
+    }
+]

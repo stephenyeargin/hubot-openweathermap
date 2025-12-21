@@ -1,11 +1,15 @@
-/* global describe, context, it, beforeEach, afterEach */
+/* global describe, context it, beforeEach, afterEach */
 
 const Helper = require('hubot-test-helper');
 const chai = require('chai');
 chai.use(require('sinon-chai'));
 const nock = require('nock');
 
-const helper = new Helper('./../src/openweathermap.js');
+const helper = new Helper([
+  './adapters/discord-legacy.js',
+  './../src/openweathermap.js',
+]);
+
 const { expect } = chai;
 
 /**
@@ -33,7 +37,7 @@ const mockGeoZip = (zip, fixture) => nock('https://api.openweathermap.org')
   .query({ zip, appid: 'abcdef' })
   .replyWithFile(200, fixture);
 
-describe('hubot-openweathermap', () => {
+describe('hubot-openweathermap discord-legacy', () => {
   let room;
 
   beforeEach(() => {

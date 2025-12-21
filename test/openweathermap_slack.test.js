@@ -9,16 +9,48 @@ const helper = new Helper([
   './adapters/slack.js',
   './../src/openweathermap.js',
 ]);
+
 const { expect } = chai;
 
+/**
+ * Test helpers
+ */
+const mockOneCall = (lat, lon, fixture) => nock('https://api.openweathermap.org')
+  .get('/data/3.0/onecall')
+  .query({ lat, lon, appid: 'abcdef' })
+  .replyWithFile(200, fixture);
+
+const mockGeoDirect = (query, fixture) => nock('https://api.openweathermap.org')
+  .get('/geo/1.0/direct')
+  .query({ q: query, limit: 1, appid: 'abcdef' })
+  .replyWithFile(200, fixture);
+
+const mockGeoReverse = (latitude, longitude, fixture) => nock('https://api.openweathermap.org')
+  .get('/geo/1.0/reverse')
+  .query({
+    lat: latitude, lon: longitude, limit: 1, appid: 'abcdef',
+  })
+  .replyWithFile(200, fixture);
+
+const mockGeoZip = (zip, fixture) => nock('https://api.openweathermap.org')
+  .get('/geo/1.0/zip')
+  .query({ zip, appid: 'abcdef' })
+  .replyWithFile(200, fixture);
+
 describe('hubot-openweathermap slack', () => {
-  let room = null;
+  let room;
 
   beforeEach(() => {
     process.env.HUBOT_OPEN_WEATHER_MAP_API_KEY = 'abcdef';
     process.env.HUBOT_DEFAULT_LATITUDE = '36.1798';
     process.env.HUBOT_DEFAULT_LONGITUDE = '-86.7411';
     room = helper.createRoom();
+    room.robot.logger = {
+      debug: () => {},
+      info: () => {},
+      warning: () => {},
+      error: () => {},
+    };
     nock.disableNetConnect();
   });
 
@@ -32,213 +64,80 @@ describe('hubot-openweathermap slack', () => {
 
   context('get weather for configured coordinates', () => {
     beforeEach((done) => {
-      nock('https://api.openweathermap.org')
-        .get('/data/2.5/weather')
-        .query({ lat: '36.1798', lon: '-86.7411', appid: 'abcdef' })
-        .replyWithFile(200, './test/fixtures/api.openweathermap.org-data-2.5-weather-37206.json');
-      nock('https://api.weather.gov')
-        .get('/points/36.1798,-86.7411')
-        .replyWithFile(200, './test/fixtures/weather.gov-points-36.1798--86.7411.geojson');
-      nock('https://api.weather.gov')
-        .get('/alerts/active/zone/TNC037')
-        .replyWithFile(200, './test/fixtures/weather.gov-alerts-active-zone-TNC037-none.geojson');
+      mockGeoReverse(
+        '36.1798',
+        '-86.7411',
+        './test/fixtures/api.openweathermap-org-geo-1.0-reverse-nashville.json',
+      );
+      mockOneCall(
+        '36.1798',
+        '-86.7411',
+        './test/fixtures/api.openweathermap.org-data-3.0-onecall-37206.json',
+      );
 
       room.user.say('alice', 'hubot weather');
-      setTimeout(done, 100);
+      setTimeout(done, 150);
     });
 
-    it('hubot responds with message', () => {
+    it('responds with weather', () => {
       expect(room.messages).to.eql([
         ['alice', 'hubot weather'],
-        [
-          'hubot',
-          {
-            attachments: [
-              {
-                author_icon: 'https://github.com/openweathermap.png',
-                author_link: 'https://openweathermap.org/',
-                author_name: 'OpenWeather',
-                color: '#eb6e4b',
-                fallback: 'Currently broken clouds and 50F/10C in Nashville',
-                fields: [
-                  {
-                    short: true,
-                    title: 'Conditions',
-                    value: 'Clouds (broken clouds)',
-                  },
-                  {
-                    short: true,
-                    title: 'Temperature',
-                    value: '50F/10C',
-                  },
-                  {
-                    short: true,
-                    title: 'Feels Like',
-                    value: '48F/9C',
-                  },
-                  {
-                    short: true,
-                    title: 'Humidity',
-                    value: '77%',
-                  },
-                ],
-                footer: 'Weather data provided by OpenWeather',
-                thumb_url: 'https://openweathermap.org/img/wn/04d@4x.png',
-                title: 'Weather in Nashville',
-                title_link: 'https://openweathermap.org/weathermap?zoom=12&lat=36.1798&lon=-86.7411',
-                ts: 1703611719,
-              },
-            ],
-          },
-        ],
-      ]);
-    });
-  });
-
-  context('get weather for configured coordinates with active alerts', () => {
-    beforeEach((done) => {
-      nock('https://api.openweathermap.org')
-        .get('/data/2.5/weather')
-        .query({ lat: '36.1798', lon: '-86.7411', appid: 'abcdef' })
-        .replyWithFile(200, './test/fixtures/api.openweathermap.org-data-2.5-weather-37206.json');
-      nock('https://api.weather.gov')
-        .get('/points/36.1798,-86.7411')
-        .replyWithFile(200, './test/fixtures/weather.gov-points-36.1798--86.7411.geojson');
-      nock('https://api.weather.gov')
-        .get('/alerts/active/zone/TNC037')
-        .replyWithFile(200, './test/fixtures/weather.gov-alerts-active-zone-TNC037-tornadoes.geojson');
-
-      room.user.say('alice', 'hubot weather');
-      setTimeout(done, 100);
-    });
-
-    it('hubot responds with message', () => {
-      expect(room.messages).to.eql([
-        ['alice', 'hubot weather'],
-        [
-          'hubot',
-          {
-            attachments: [
-              {
-                author_icon: 'https://github.com/openweathermap.png',
-                author_link: 'https://openweathermap.org/',
-                author_name: 'OpenWeather',
-                color: '#eb6e4b',
-                fallback: 'Currently broken clouds and 50F/10C in Nashville',
-                fields: [
-                  {
-                    short: true,
-                    title: 'Conditions',
-                    value: 'Clouds (broken clouds)',
-                  },
-                  {
-                    short: true,
-                    title: 'Temperature',
-                    value: '50F/10C',
-                  },
-                  {
-                    short: true,
-                    title: 'Feels Like',
-                    value: '48F/9C',
-                  },
-                  {
-                    short: true,
-                    title: 'Humidity',
-                    value: '77%',
-                  },
-                ],
-                footer: 'Weather data provided by OpenWeather',
-                thumb_url: 'https://openweathermap.org/img/wn/04d@4x.png',
-                title: 'Weather in Nashville',
-                title_link: 'https://openweathermap.org/weathermap?zoom=12&lat=36.1798&lon=-86.7411',
-                ts: 1703611719,
-              },
-            ],
-          },
-
-        ],
-        [
-          'hubot',
-          {
-            attachments: [
-              {
-                author_icon: 'https://github.com/NOAAGov.png',
-                author_link: 'https://weather.gov/',
-                author_name: 'Weather.gov',
-                color: '#56F000',
-                fallback: '* WHAT...Flooding caused by excessive rainfall is expected.\n\n* WHERE...A portion of Middle Tennessee, including the following\ncounties, Cheatham, Davidson, Macon, Robertson, Sumner and\nTrousdale.\n\n* WHEN...Until 900 PM CST.\n\n* IMPACTS...Minor flooding in low-lying and poor drainage areas.\n\n* ADDITIONAL DETAILS...\n- At 548 PM CST, Doppler radar indicated heavy rain due to\nthunderstorms. Minor flooding is ongoing or expected to begin\nshortly in the advisory area. Between 1 and 2 inches of rain\nhave fallen.\n- Some locations that will experience flooding include...\nGallatin, Ashland City, Lafayette, Madison, Hendersonville,\nGoodlettsville, White House, Millersville, Greenbrier,\nWestmoreland, Ridgetop, Old Hickory, Joelton, Cottontown,\nBledsoe Creek State Park, Whites Creek, Bethpage, Beaman Park\nand Bells Bend.\n- http://www.weather.gov/safety/flood',
-                fields: [
-                  {
-                    short: true,
-                    title: 'Severity',
-                    value: 'Minor',
-                  },
-                  {
-                    short: true,
-                    title: 'Certainty',
-                    value: 'Likely',
-                  },
-                  {
-                    short: false,
-                    title: 'Areas Affected',
-                    value: 'Cheatham, TN; Davidson, TN; Macon, TN; Robertson, TN; Sumner, TN; Trousdale, TN',
-                  },
-                  {
-                    short: false,
-                    title: 'Instructions / Response',
-                    value: "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
-                  },
-                ],
-                mrkdwn_in: [
-                  'text',
-                ],
-                pretext: 'Flood Advisory',
-                text: '```\n* WHAT...Flooding caused by excessive rainfall is expected.\n\n* WHERE...A portion of Middle Tennessee, including the following\ncounties, Cheatham, Davidson, Macon, Robertson, Sumner and\nTrousdale.\n\n* WHEN...Until 900 PM CST.\n\n* IMPACTS...Minor flooding in low-lying and poor drainage areas.\n\n* ADDITIONAL DETAILS...\n- At 548 PM CST, Doppler radar indicated heavy rain due to\nthunderstorms. Minor flooding is ongoing or expected to begin\nshortly in the advisory area. Between 1 and 2 inches of rain\nhave fallen.\n- Some locations that will experience flooding include...\nGallatin, Ashland City, Lafayette, Madison, Hendersonville,\nGoodlettsville, White House, Millersville, Greenbrier,\nWestmoreland, Ridgetop, Old Hickory, Joelton, Cottontown,\nBledsoe Creek State Park, Whites Creek, Bethpage, Beaman Park\nand Bells Bend.\n- http://www.weather.gov/safety/flood\n```',
-                title: 'Flood Advisory issued December 9 at 5:48PM CST until December 9 at 9:00PM CST by NWS Nashville TN',
-                footer: 'Alerts provided by the National Weather Service',
-                ts: 1702165680,
-              },
-              {
-                author_icon: 'https://github.com/NOAAGov.png',
-                author_link: 'https://weather.gov/',
-                author_name: 'Weather.gov',
-                color: '#FF3838',
-                fallback: 'TORNADO WATCH 714 REMAINS VALID UNTIL 7 PM CST THIS EVENING FOR\nTHE FOLLOWING AREAS\n\nIN TENNESSEE THIS WATCH INCLUDES 14 COUNTIES\n\nIN MIDDLE TENNESSEE\n\nDAVIDSON              HICKMAN               LAWRENCE\nLEWIS                 MACON                 MAURY\nPERRY                 RUTHERFORD            SMITH\nSUMNER                TROUSDALE             WAYNE\nWILLIAMSON            WILSON\n\nTHIS INCLUDES THE CITIES OF BRENTWOOD, CARTHAGE, CENTERVILLE,\nCLIFTON, COLLINWOOD, COLUMBIA, FRANKLIN, GALLATIN,\nGOODLETTSVILLE, GORDONSVILLE, HARTSVILLE, HENDERSONVILLE,\nHOHENWALD, LA VERGNE, LAFAYETTE, LAWRENCEBURG, LEBANON, LINDEN,\nLOBELVILLE, MOUNT JULIET, MURFREESBORO, NASHVILLE, SMYRNA,\nSOUTH CARTHAGE, AND WAYNESBORO.',
-                fields: [
-                  {
-                    short: true,
-                    title: 'Severity',
-                    value: 'Extreme',
-                  },
-                  {
-                    short: true,
-                    title: 'Certainty',
-                    value: 'Possible',
-                  },
-                  {
-                    short: false,
-                    title: 'Areas Affected',
-                    value: 'Davidson, TN; Hickman, TN; Lawrence, TN; Lewis, TN; Macon, TN; Maury, TN; Perry, TN; Rutherford, TN; Smith, TN; Sumner, TN; Trousdale, TN; Wayne, TN; Williamson, TN; Wilson, TN',
-                  },
-                  {
-                    short: false,
-                    title: 'Instructions / Response',
-                    value: 'Monitor',
-                  },
-                ],
-                mrkdwn_in: [
-                  'text',
-                ],
-                footer: 'Alerts provided by the National Weather Service',
-                pretext: 'Tornado Watch',
-                text: '```\nTORNADO WATCH 714 REMAINS VALID UNTIL 7 PM CST THIS EVENING FOR\nTHE FOLLOWING AREAS\n\nIN TENNESSEE THIS WATCH INCLUDES 14 COUNTIES\n\nIN MIDDLE TENNESSEE\n\nDAVIDSON              HICKMAN               LAWRENCE\nLEWIS                 MACON                 MAURY\nPERRY                 RUTHERFORD            SMITH\nSUMNER                TROUSDALE             WAYNE\nWILLIAMSON            WILSON\n\nTHIS INCLUDES THE CITIES OF BRENTWOOD, CARTHAGE, CENTERVILLE,\nCLIFTON, COLLINWOOD, COLUMBIA, FRANKLIN, GALLATIN,\nGOODLETTSVILLE, GORDONSVILLE, HARTSVILLE, HENDERSONVILLE,\nHOHENWALD, LA VERGNE, LAFAYETTE, LAWRENCEBURG, LEBANON, LINDEN,\nLOBELVILLE, MOUNT JULIET, MURFREESBORO, NASHVILLE, SMYRNA,\nSOUTH CARTHAGE, AND WAYNESBORO.\n```',
-                title: 'Tornado Watch issued December 9 at 5:38PM CST until December 9 at 7:00PM CST by NWS Nashville TN',
-                ts: 1702165080,
-              },
-            ],
-            mrkdwn: true,
-            text: '*Current watches, warnings, and advisories for Davidson County (TNC037) TN*',
-          },
+        ['hubot', {
+          attachments: [
+            {
+              author_icon: 'https://github.com/openweathermap.png',
+              author_link: 'https://openweathermap.org/',
+              author_name: 'OpenWeather',
+              color: '#eb6e4b',
+              fallback: 'Currently broken clouds and 50F/10C in Nashville-Davidson, Tennessee',
+              fields: [
+                {
+                  short: true,
+                  title: 'Conditions',
+                  value: 'Rain (broken clouds)',
+                },
+                {
+                  short: true,
+                  title: 'Temperature',
+                  value: '50F/10C',
+                },
+                {
+                  short: true,
+                  title: 'Feels Like',
+                  value: '49F/10C',
+                },
+                {
+                  short: true,
+                  title: 'Humidity',
+                  value: '90%',
+                },
+              ],
+              footer: 'Weather data provided by OpenWeather',
+              thumb_url: 'https://openweathermap.org/img/wn/10n@4x.png',
+              title: 'Weather for Nashville-Davidson, Tennessee',
+              title_link: 'https://openweathermap.org/weathermap?zoom=12&lat=36.1622&lon=-86.7744',
+              ts: 1766110733,
+            },
+            {
+              author_icon: 'https://a.slack-edge.com/production-standard-emoji-assets/14.0/apple-small/26a0-fe0f.png',
+              author_name: 'NWS Nashville TN',
+              color: '#FF0000',
+              fallback: 'Flood Advisory: * WHAT...Flooding caused by excessive rainfall is expected.\n\n* WHERE...A portion of Middle Tennessee, including the following\ncounties, Cheatham, Davidson, Robertson and Sumner.\n\n* WHEN...Until 1000 PM CST.\n\n* IMPACTS...Minor flooding in low-lying and poor drainage areas.\n\n* ADDITIONAL DETAILS...\n- At 656 PM CST, Doppler radar indicated heavy rain due to\nthunderstorms. Minor flooding is ongoing or expected to begin\nshortly in the advisory area. Between 1 and 2 inches of rain\nhave fallen.\n- Some locations that will experience flooding include...\nGallatin, Springfield, Ashland City, Nashville, Madison,\nHendersonville, Goodlettsville, White House, Millersville,\nGreenbrier, Forest Hills, Oak Hill, Coopertown, Belle Meade,\nLakewood, Ridgetop, Cross Plains, Portland, Joelton and Old\nHickory.\n- http://www.weather.gov/safety/flood',
+              fields: [
+                {
+                  title: 'Effective',
+                  value: 'Dec 18, 2025 6:56 PM CST - Dec 18, 2025 10:00 PM CST',
+                },
+                {
+                  title: 'Tags',
+                  value: 'Flood',
+                },
+              ],
+              text: '```\n* WHAT...Flooding caused by excessive rainfall is expected.\n\n* WHERE...A portion of Middle Tennessee, including the following\ncounties, Cheatham, Davidson, Robertson and Sumner.\n\n* WHEN...Until 1000 PM CST.\n\n* IMPACTS...Minor flooding in low-lying and poor drainage areas.\n\n* ADDITIONAL DETAILS...\n- At 656 PM CST, Doppler radar indicated heavy rain due to\nthunderstorms. Minor flooding is ongoing or expected to begin\nshortly in the advisory area. Between 1 and 2 inches of rain\nhave fallen.\n- Some locations that will experience flooding include...\nGallatin, Springfield, Ashland City, Nashville, Madison,\nHendersonville, Goodlettsville, White House, Millersville,\nGreenbrier, Forest Hills, Oak Hill, Coopertown, Belle Meade,\nLakewood, Ridgetop, Cross Plains, Portland, Joelton and Old\nHickory.\n- http://www.weather.gov/safety/flood\n```',
+              title: 'Flood Advisory',
+            },
+          ],
+        },
         ],
       ]);
     });
@@ -246,64 +145,76 @@ describe('hubot-openweathermap slack', () => {
 
   context('get weather for a zip code', () => {
     beforeEach((done) => {
-      nock('https://api.openweathermap.org')
-        .get('/data/2.5/weather')
-        .query({ zip: 37206, appid: 'abcdef' })
-        .replyWithFile(200, './test/fixtures/api.openweathermap.org-data-2.5-weather-37206.json');
-      nock('https://api.weather.gov')
-        .get('/points/36.1798,-86.7411')
-        .replyWithFile(200, './test/fixtures/weather.gov-points-36.1798--86.7411.geojson');
-      nock('https://api.weather.gov')
-        .get('/alerts/active/zone/TNC037')
-        .replyWithFile(200, './test/fixtures/weather.gov-alerts-active-zone-TNC037-none.geojson');
+      mockGeoZip('37206', './test/fixtures/api.openweathermap-org-geo-1.0-zip-37206.json');
+      mockOneCall(
+        36.1798,
+        -86.7411,
+        './test/fixtures/api.openweathermap.org-data-3.0-onecall-37206.json',
+      );
 
       room.user.say('alice', 'hubot weather 37206');
-      setTimeout(done, 100);
+      setTimeout(done, 150);
     });
 
-    it('hubot responds with message', () => {
+    it('responds with weather', () => {
       expect(room.messages).to.eql([
         ['alice', 'hubot weather 37206'],
-        [
-          'hubot',
-          {
-            attachments: [
-              {
-                author_icon: 'https://github.com/openweathermap.png',
-                author_link: 'https://openweathermap.org/',
-                author_name: 'OpenWeather',
-                color: '#eb6e4b',
-                fallback: 'Currently broken clouds and 50F/10C in Nashville',
-                fields: [
-                  {
-                    short: true,
-                    title: 'Conditions',
-                    value: 'Clouds (broken clouds)',
-                  },
-                  {
-                    short: true,
-                    title: 'Temperature',
-                    value: '50F/10C',
-                  },
-                  {
-                    short: true,
-                    title: 'Feels Like',
-                    value: '48F/9C',
-                  },
-                  {
-                    short: true,
-                    title: 'Humidity',
-                    value: '77%',
-                  },
-                ],
-                footer: 'Weather data provided by OpenWeather',
-                thumb_url: 'https://openweathermap.org/img/wn/04d@4x.png',
-                title: 'Weather in Nashville',
-                title_link: 'https://openweathermap.org/weathermap?zoom=12&lat=36.1798&lon=-86.7411',
-                ts: 1703611719,
-              },
-            ],
-          },
+        ['hubot', {
+          attachments: [
+            {
+              author_icon: 'https://github.com/openweathermap.png',
+              author_link: 'https://openweathermap.org/',
+              author_name: 'OpenWeather',
+              color: '#eb6e4b',
+              fallback: 'Currently broken clouds and 50F/10C in Nashville, US',
+              fields: [
+                {
+                  short: true,
+                  title: 'Conditions',
+                  value: 'Rain (broken clouds)',
+                },
+                {
+                  short: true,
+                  title: 'Temperature',
+                  value: '50F/10C',
+                },
+                {
+                  short: true,
+                  title: 'Feels Like',
+                  value: '49F/10C',
+                },
+                {
+                  short: true,
+                  title: 'Humidity',
+                  value: '90%',
+                },
+              ],
+              footer: 'Weather data provided by OpenWeather',
+              thumb_url: 'https://openweathermap.org/img/wn/10n@4x.png',
+              title: 'Weather for Nashville, US',
+              title_link: 'https://openweathermap.org/weathermap?zoom=12&lat=36.1622&lon=-86.7744',
+              ts: 1766110733,
+            },
+            {
+              author_icon: 'https://a.slack-edge.com/production-standard-emoji-assets/14.0/apple-small/26a0-fe0f.png',
+              author_name: 'NWS Nashville TN',
+              color: '#FF0000',
+              fallback: 'Flood Advisory: * WHAT...Flooding caused by excessive rainfall is expected.\n\n* WHERE...A portion of Middle Tennessee, including the following\ncounties, Cheatham, Davidson, Robertson and Sumner.\n\n* WHEN...Until 1000 PM CST.\n\n* IMPACTS...Minor flooding in low-lying and poor drainage areas.\n\n* ADDITIONAL DETAILS...\n- At 656 PM CST, Doppler radar indicated heavy rain due to\nthunderstorms. Minor flooding is ongoing or expected to begin\nshortly in the advisory area. Between 1 and 2 inches of rain\nhave fallen.\n- Some locations that will experience flooding include...\nGallatin, Springfield, Ashland City, Nashville, Madison,\nHendersonville, Goodlettsville, White House, Millersville,\nGreenbrier, Forest Hills, Oak Hill, Coopertown, Belle Meade,\nLakewood, Ridgetop, Cross Plains, Portland, Joelton and Old\nHickory.\n- http://www.weather.gov/safety/flood',
+              fields: [
+                {
+                  title: 'Effective',
+                  value: 'Dec 18, 2025 6:56 PM CST - Dec 18, 2025 10:00 PM CST',
+                },
+                {
+                  title: 'Tags',
+                  value: 'Flood',
+                },
+              ],
+              text: '```\n* WHAT...Flooding caused by excessive rainfall is expected.\n\n* WHERE...A portion of Middle Tennessee, including the following\ncounties, Cheatham, Davidson, Robertson and Sumner.\n\n* WHEN...Until 1000 PM CST.\n\n* IMPACTS...Minor flooding in low-lying and poor drainage areas.\n\n* ADDITIONAL DETAILS...\n- At 656 PM CST, Doppler radar indicated heavy rain due to\nthunderstorms. Minor flooding is ongoing or expected to begin\nshortly in the advisory area. Between 1 and 2 inches of rain\nhave fallen.\n- Some locations that will experience flooding include...\nGallatin, Springfield, Ashland City, Nashville, Madison,\nHendersonville, Goodlettsville, White House, Millersville,\nGreenbrier, Forest Hills, Oak Hill, Coopertown, Belle Meade,\nLakewood, Ridgetop, Cross Plains, Portland, Joelton and Old\nHickory.\n- http://www.weather.gov/safety/flood\n```',
+              title: 'Flood Advisory',
+            },
+          ],
+        },
         ],
       ]);
     });
@@ -311,112 +222,269 @@ describe('hubot-openweathermap slack', () => {
 
   context('get weather for a city', () => {
     beforeEach((done) => {
-      nock('https://api.openweathermap.org')
-        .get('/data/2.5/weather')
-        .query({ q: 'seattle,WA,US', appid: 'abcdef' })
-        .replyWithFile(200, './test/fixtures/api.openweathermap.org-data-2.5-weather-seattle.json');
-      nock('https://api.weather.gov')
-        .get('/points/47.6038,-122.3301')
-        .replyWithFile(200, './test/fixtures/weather.gov-points-47.6038--122.3301.geojson');
-      nock('https://api.weather.gov')
-        .get('/alerts/active/zone/WAC033')
-        .replyWithFile(200, './test/fixtures/weather.gov-alerts-active-zone-WAC033-wind.geojson');
+      mockGeoDirect('denver,co,us', './test/fixtures/api.openweathermap-org-geo-1.0-direct-denver.json');
+      mockOneCall(
+        39.7392364,
+        -104.984862,
+        './test/fixtures/api.openweathermap.org-data-3.0-onecall-denver.json',
+      );
 
-      room.user.say('alice', 'hubot weather seattle, WA');
-      setTimeout(done, 100);
+      room.user.say('alice', 'hubot weather denver, CO');
+      setTimeout(done, 150);
     });
 
-    it('hubot responds with message', () => {
+    it('responds with weather', () => {
       expect(room.messages).to.eql([
-        ['alice', 'hubot weather seattle, WA'],
-        [
-          'hubot',
-          {
-            attachments: [
-              {
-                author_icon: 'https://github.com/openweathermap.png',
-                author_link: 'https://openweathermap.org/',
-                author_name: 'OpenWeather',
-                color: '#eb6e4b',
-                fallback: 'Currently scattered clouds and 47F/8C in Seattle',
-                fields: [
-                  {
-                    short: true,
-                    title: 'Conditions',
-                    value: 'Clouds (scattered clouds)',
-                  },
-                  {
-                    short: true,
-                    title: 'Temperature',
-                    value: '47F/8C',
-                  },
-                  {
-                    short: true,
-                    title: 'Feels Like',
-                    value: '45F/7C',
-                  },
-                  {
-                    short: true,
-                    title: 'Humidity',
-                    value: '90%',
-                  },
-                ],
-                footer: 'Weather data provided by OpenWeather',
-                thumb_url: 'https://openweathermap.org/img/wn/03d@4x.png',
-                title: 'Weather in Seattle',
-                title_link: 'https://openweathermap.org/weathermap?zoom=12&lat=47.6038&lon=-122.3301',
-                ts: 1703617000,
-              },
-            ],
-          },
-        ],
-        [
-          'hubot',
-          {
-            attachments: [
-              {
-                author_icon: 'https://github.com/NOAAGov.png',
-                author_link: 'https://weather.gov/',
-                author_name: 'Weather.gov',
-                color: '#FCE83A',
-                fallback: '* WHAT...East winds 20 to 35 mph with gusts 45 to 55 mph near gaps\nin the terrain.\n\n* WHERE...East Puget Sound Lowlands.\n\n* WHEN...From 6 PM this evening to 1 PM PST Wednesday.\n\n* IMPACTS...Gusty winds could blow around unsecured objects.\nTree limbs could be blown down and a few power outages may\nresult.',
-                fields: [
-                  {
-                    short: true,
-                    title: 'Severity',
-                    value: 'Moderate',
-                  },
-                  {
-                    short: true,
-                    title: 'Certainty',
-                    value: 'Likely',
-                  },
-                  {
-                    short: false,
-                    title: 'Areas Affected',
-                    value: 'East Puget Sound Lowlands',
-                  },
-                  {
-                    short: false,
-                    title: 'Instructions / Response',
-                    value: 'Use extra caution when driving, especially if operating a high\nprofile vehicle. Secure outdoor objects.',
-                  },
-                ],
-                mrkdwn_in: [
-                  'text',
-                ],
-                pretext: 'Wind Advisory',
-                text: '```\n* WHAT...East winds 20 to 35 mph with gusts 45 to 55 mph near gaps\nin the terrain.\n\n* WHERE...East Puget Sound Lowlands.\n\n* WHEN...From 6 PM this evening to 1 PM PST Wednesday.\n\n* IMPACTS...Gusty winds could blow around unsecured objects.\nTree limbs could be blown down and a few power outages may\nresult.\n```',
-                title: 'Wind Advisory issued December 26 at 3:52AM PST until December 27 at 1:00PM PST by NWS Seattle WA',
-                footer: 'Alerts provided by the National Weather Service',
-                ts: 1703591520,
-              },
-            ],
-            mrkdwn: true,
-            text: '*Current watches, warnings, and advisories for King County (WAC033) WA*',
-          },
-        ],
+        ['alice', 'hubot weather denver, CO'],
+        ['hubot', {
+          attachments: [
+            {
+              author_icon: 'https://github.com/openweathermap.png',
+              author_link: 'https://openweathermap.org/',
+              author_name: 'OpenWeather',
+              color: '#eb6e4b',
+              fallback: 'Currently scattered clouds and 59F/15C in Denver, Colorado',
+              fields: [
+                {
+                  short: true,
+                  title: 'Conditions',
+                  value: 'Clouds (scattered clouds)',
+                },
+                {
+                  short: true,
+                  title: 'Temperature',
+                  value: '59F/15C',
+                },
+                {
+                  short: true,
+                  title: 'Feels Like',
+                  value: '56F/13C',
+                },
+                {
+                  short: true,
+                  title: 'Humidity',
+                  value: '23%',
+                },
+              ],
+              footer: 'Weather data provided by OpenWeather',
+              thumb_url: 'https://openweathermap.org/img/wn/03n@4x.png',
+              title: 'Weather for Denver, Colorado',
+              title_link: 'https://openweathermap.org/weathermap?zoom=12&lat=40.0154&lon=-105.2702',
+              ts: 1766204623,
+            },
+            {
+              author_icon: 'https://a.slack-edge.com/production-standard-emoji-assets/14.0/apple-small/26a0-fe0f.png',
+              author_name: 'NWS Denver CO',
+              color: '#FF0000',
+              fallback: 'Red Flag Warning: ...RED FLAG WARNING REMAINS IN EFFECT UNTIL MIDNIGHT...\n\nWest west winds of 20-35 mph with gusts as high as 60 mph in wind\nprone areas near the base of the foothills will continue into\nthis evening. They will also be spreading east onto the nearby\nadjacent plains and I-25 Corridor through late evening and\novernight. While the Particularly Dangerous Situation for the\nfoothills of Boulder and northern Jefferson Counties has eased,\nRed Flag conditions will remain in place as we stay in a near\nrecord warm, dry, and windy airmass along the Front Range through\nmidnight. In fact, strong, gusty winds will persist through much\nof the night with only a slow improvement in humidity values.\nThus, near critical Red Flag conditions will occur into early\nSaturday morning.\n\n* AFFECTED AREA...Fire Weather Zone 239.\n\n* TIMING...Until midnight MST tonight.\n\n* WINDS...West 25 to 35 mph with gusts up to 60 mph.\n\n* RELATIVE HUMIDITY...As low as 14 percent.\n\n* IMPACTS...Conditions will be favorable for rapid fire spread.\nAvoid outdoor burning and any activity that may produce a\nspark and start a wildfire.',
+              fields: [
+                {
+                  title: 'Effective',
+                  value: 'Dec 19, 2025 8:08 PM MST - Dec 20, 2025 12:00 AM MST',
+                },
+                {
+                  title: 'Tags',
+                  value: 'Other dangers',
+                },
+              ],
+              text: '```\n...RED FLAG WARNING REMAINS IN EFFECT UNTIL MIDNIGHT...\n\nWest west winds of 20-35 mph with gusts as high as 60 mph in wind\nprone areas near the base of the foothills will continue into\nthis evening. They will also be spreading east onto the nearby\nadjacent plains and I-25 Corridor through late evening and\novernight. While the Particularly Dangerous Situation for the\nfoothills of Boulder and northern Jefferson Counties has eased,\nRed Flag conditions will remain in place as we stay in a near\nrecord warm, dry, and windy airmass along the Front Range through\nmidnight. In fact, strong, gusty winds will persist through much\nof the night with only a slow improvement in humidity values.\nThus, near critical Red Flag conditions will occur into early\nSaturday morning.\n\n* AFFECTED AREA...Fire Weather Zone 239.\n\n* TIMING...Until midnight MST tonight.\n\n* WINDS...West 25 to 35 mph with gusts up to 60 mph.\n\n* RELATIVE HUMIDITY...As low as 14 percent.\n\n* IMPACTS...Conditions will be favorable for rapid fire spread.\nAvoid outdoor burning and any activity that may produce a\nspark and start a wildfire.\n```',
+              title: 'Red Flag Warning',
+            },
+          ],
+        }],
       ]);
     });
+  });
+
+  context('get weather for location outside US', () => {
+    beforeEach((done) => {
+      nock('https://api.openweathermap.org')
+        .get('/geo/1.0/direct')
+        .query({
+          q: 'London, UK',
+          limit: 1,
+          appid: 'abcdef',
+        })
+        .reply(200, [{
+          name: 'London',
+          lat: 51.5072,
+          lon: -0.1276,
+          country: 'GB',
+        }]);
+      mockOneCall(
+        51.5072,
+        -0.1276,
+        './test/fixtures/api.openweathermap.org-data-3.0-onecall-denver.json',
+      );
+
+      room.user.say('alice', 'hubot weather London, UK');
+      setTimeout(done, 150);
+    });
+
+    it('responds with weather', () => {
+      expect(room.messages).to.eql([
+        ['alice', 'hubot weather London, UK'],
+        ['hubot', {
+          attachments: [
+            {
+              author_icon: 'https://github.com/openweathermap.png',
+              author_link: 'https://openweathermap.org/',
+              author_name: 'OpenWeather',
+              color: '#eb6e4b',
+              fallback: 'Currently scattered clouds and 59F/15C in London, GB',
+              fields: [
+                {
+                  short: true,
+                  title: 'Conditions',
+                  value: 'Clouds (scattered clouds)',
+                },
+                {
+                  short: true,
+                  title: 'Temperature',
+                  value: '59F/15C',
+                },
+                {
+                  short: true,
+                  title: 'Feels Like',
+                  value: '56F/13C',
+                },
+                {
+                  short: true,
+                  title: 'Humidity',
+                  value: '23%',
+                },
+              ],
+              footer: 'Weather data provided by OpenWeather',
+              thumb_url: 'https://openweathermap.org/img/wn/03n@4x.png',
+              title: 'Weather for London, GB',
+              title_link: 'https://openweathermap.org/weathermap?zoom=12&lat=40.0154&lon=-105.2702',
+              ts: 1766204623,
+            },
+            {
+              author_icon: 'https://a.slack-edge.com/production-standard-emoji-assets/14.0/apple-small/26a0-fe0f.png',
+              author_name: 'NWS Denver CO',
+              color: '#FF0000',
+              fallback: 'Red Flag Warning: ...RED FLAG WARNING REMAINS IN EFFECT UNTIL MIDNIGHT...\n\nWest west winds of 20-35 mph with gusts as high as 60 mph in wind\nprone areas near the base of the foothills will continue into\nthis evening. They will also be spreading east onto the nearby\nadjacent plains and I-25 Corridor through late evening and\novernight. While the Particularly Dangerous Situation for the\nfoothills of Boulder and northern Jefferson Counties has eased,\nRed Flag conditions will remain in place as we stay in a near\nrecord warm, dry, and windy airmass along the Front Range through\nmidnight. In fact, strong, gusty winds will persist through much\nof the night with only a slow improvement in humidity values.\nThus, near critical Red Flag conditions will occur into early\nSaturday morning.\n\n* AFFECTED AREA...Fire Weather Zone 239.\n\n* TIMING...Until midnight MST tonight.\n\n* WINDS...West 25 to 35 mph with gusts up to 60 mph.\n\n* RELATIVE HUMIDITY...As low as 14 percent.\n\n* IMPACTS...Conditions will be favorable for rapid fire spread.\nAvoid outdoor burning and any activity that may produce a\nspark and start a wildfire.',
+              fields: [
+                {
+                  title: 'Effective',
+                  value: 'Dec 19, 2025 8:08 PM MST - Dec 20, 2025 12:00 AM MST',
+                },
+                {
+                  title: 'Tags',
+                  value: 'Other dangers',
+                },
+              ],
+              text: '```\n...RED FLAG WARNING REMAINS IN EFFECT UNTIL MIDNIGHT...\n\nWest west winds of 20-35 mph with gusts as high as 60 mph in wind\nprone areas near the base of the foothills will continue into\nthis evening. They will also be spreading east onto the nearby\nadjacent plains and I-25 Corridor through late evening and\novernight. While the Particularly Dangerous Situation for the\nfoothills of Boulder and northern Jefferson Counties has eased,\nRed Flag conditions will remain in place as we stay in a near\nrecord warm, dry, and windy airmass along the Front Range through\nmidnight. In fact, strong, gusty winds will persist through much\nof the night with only a slow improvement in humidity values.\nThus, near critical Red Flag conditions will occur into early\nSaturday morning.\n\n* AFFECTED AREA...Fire Weather Zone 239.\n\n* TIMING...Until midnight MST tonight.\n\n* WINDS...West 25 to 35 mph with gusts up to 60 mph.\n\n* RELATIVE HUMIDITY...As low as 14 percent.\n\n* IMPACTS...Conditions will be favorable for rapid fire spread.\nAvoid outdoor burning and any activity that may produce a\nspark and start a wildfire.\n```',
+              title: 'Red Flag Warning',
+            },
+          ],
+        }],
+      ]);
+    });
+  });
+
+  context('friendly message when location not found', () => {
+    beforeEach((done) => {
+      nock('https://api.openweathermap.org')
+        .get('/geo/1.0/direct')
+        .query({ q: 'nowhere, ZZ', limit: 1, appid: 'abcdef' })
+        .reply(200, []);
+
+      room.user.say('alice', 'hubot weather nowhere, ZZ');
+      setTimeout(done, 150);
+    });
+
+    it('responds with friendly error', () => {
+      expect(room.messages).to.eql([
+        ['alice', 'hubot weather nowhere, ZZ'],
+        ['hubot', 'Sorry, I couldn’t find that location.'],
+      ]);
+    });
+  });
+
+  context('handle One Call API error', () => {
+    beforeEach((done) => {
+      mockGeoDirect('server, ERROR', './test/fixtures/api.openweathermap-org-geo-1.0-direct-denver.json');
+
+      nock('https://api.openweathermap.org')
+        .get('/data/3.0/onecall')
+        .query({ lat: 39.7392364, lon: -104.984862, appid: 'abcdef' })
+        .replyWithError(new Error('Mock internal service error'));
+
+      room.user.say('alice', 'hubot weather server, ERROR');
+      setTimeout(done, 150);
+    });
+
+    it('responds with generic error', () => {
+      expect(room.messages).to.eql([
+        ['alice', 'hubot weather server, ERROR'],
+        ['hubot', 'Sorry, I couldn’t retrieve weather data for that location.'],
+      ]);
+    });
+  });
+});
+
+describe('hubot-openweathermap no API key', () => {
+  let room;
+
+  beforeEach(() => {
+    room = helper.createRoom();
+    room.robot.logger = {
+      debug: () => {},
+      info: () => {},
+      warning: () => {},
+      error: () => {},
+    };
+    nock.disableNetConnect();
+  });
+
+  afterEach(() => {
+    room.destroy();
+    nock.cleanAll();
+  });
+
+  it('responds with missing API key message', (done) => {
+    room.user.say('alice', 'hubot weather');
+    setTimeout(() => {
+      expect(room.messages).to.eql([
+        ['alice', 'hubot weather'],
+        ['hubot', 'No API Key configured.'],
+      ]);
+      done();
+    }, 100);
+  });
+});
+
+describe('hubot-openweathermap no default location', () => {
+  let room;
+
+  beforeEach(() => {
+    process.env.HUBOT_OPEN_WEATHER_MAP_API_KEY = 'abcdef';
+    room = helper.createRoom();
+    room.robot.logger = {
+      debug: () => {},
+      info: () => {},
+      warning: () => {},
+      error: () => {},
+    };
+    nock.disableNetConnect();
+  });
+
+  afterEach(() => {
+    room.destroy();
+    nock.cleanAll();
+    delete process.env.HUBOT_OPEN_WEATHER_MAP_API_KEY;
+  });
+
+  it('responds with missing default location message', (done) => {
+    room.user.say('alice', 'hubot weather');
+    setTimeout(() => {
+      expect(room.messages).to.eql([
+        ['alice', 'hubot weather'],
+        ['hubot', 'No default location set.'],
+      ]);
+      done();
+    }, 100);
   });
 });
