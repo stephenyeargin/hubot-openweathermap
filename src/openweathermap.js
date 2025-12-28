@@ -216,7 +216,7 @@ module.exports = (robot) => {
   };
 
   /**
-   * Format weather + alerts (One Call 3.0)
+   * Format weather (One Call 3.0)
    */
   const formatWeather = (json) => {
     const textFallback = `Currently ${json.current?.weather[0]?.description} and ${formatUnits(
@@ -267,27 +267,6 @@ module.exports = (robot) => {
           },
         ],
       };
-
-      json.alerts.forEach((alert) => {
-        blocks.attachments.push({
-          title: alert.event,
-          fallback: `${alert.event}: ${alert.description}`,
-          text: `\`\`\`\n${alert.description}\n\`\`\``,
-          author_name: alert.sender_name,
-          author_icon: 'https://a.slack-edge.com/production-standard-emoji-assets/14.0/apple-small/26a0-fe0f.png',
-          color: '#FF0000',
-          fields: [
-            {
-              title: 'Effective',
-              value: `${dayjs.unix(alert.start).tz(json.timezone).format('lll z')} - ${dayjs.unix(alert.end).tz(json.timezone).format('lll z')}`,
-            },
-            {
-              title: 'Tags',
-              value: alert.tags?.join(', ') || '—',
-            },
-          ],
-        });
-      });
 
       return blocks;
     }
@@ -343,6 +322,54 @@ module.exports = (robot) => {
           .setTimestamp(new Date(json.current.dt * 1000)),
       ];
 
+      return { embeds };
+    }
+
+    return textFallback;
+  };
+
+  /**
+   * Format alerts (One Call 3.0)
+   */
+  const formatAlerts = (json) => {
+    const adapterName = robot.adapterName ?? robot.adapter?.name ?? '';
+
+    if (/slack/i.test(adapterName)) {
+      const blocks = {
+        attachments: [],
+      };
+
+      json.alerts.forEach((alert) => {
+        blocks.attachments.push({
+          title: alert.event,
+          fallback: `${alert.event}: ${alert.description}`,
+          text: `\`\`\`\n${alert.description}\n\`\`\``,
+          author_name: alert.sender_name,
+          author_icon: 'https://a.slack-edge.com/production-standard-emoji-assets/14.0/apple-small/26a0-fe0f.png',
+          color: '#FF0000',
+          fields: [
+            {
+              title: 'Effective',
+              value: `${dayjs.unix(alert.start).tz(json.timezone).format('lll z')} - ${dayjs.unix(alert.end).tz(json.timezone).format('lll z')}`,
+            },
+            {
+              title: 'Tags',
+              value: alert.tags?.join(', ') || '—',
+            },
+          ],
+        });
+      });
+
+      return blocks;
+    }
+
+    if (robot.adapterName?.includes('discord') || robot.adapter?.name?.includes('discord')) {
+      if (semver.lt(robot.parseVersion() || hubotVersion, '11.0.0')) {
+        return json.alerts.map((alert) => `⚠️ ${alert.event} issued ${dayjs.unix(alert.start).tz(json.timezone).format('MMMM D [at] h:mmA z')} until ${dayjs.unix(alert.end).tz(json.timezone).format('MMMM D [at] h:mmA z')} by ${alert.sender_name}`).join('\n');
+      }
+
+      const embeds = [];
+
       json.alerts.forEach((alert) => {
         embeds.push(
           new DiscordEmbedBuilder()
@@ -366,7 +393,7 @@ module.exports = (robot) => {
       return { embeds };
     }
 
-    return textFallback;
+    return json.alerts.map((alert) => `⚠️ ${alert.event} issued ${dayjs.unix(alert.start).tz(json.timezone).format('MMMM D [at] h:mmA z')} until ${dayjs.unix(alert.end).tz(json.timezone).format('MMMM D [at] h:mmA z')} by ${alert.sender_name}`).join('\n');
   };
 
   /**
@@ -410,7 +437,13 @@ module.exports = (robot) => {
             weather.location = place;
           }
 
-          return msg.send(formatWeather(weather));
+          msg.send(formatWeather(weather));
+
+          if (weather.alerts && weather.alerts.length > 0) {
+            msg.send(formatAlerts(weather));
+          }
+
+          return undefined;
         });
       });
       return;
@@ -434,7 +467,14 @@ module.exports = (robot) => {
           state: coords.state,
           country: coords.country,
         };
-        return msg.send(formatWeather(weather));
+
+        msg.send(formatWeather(weather));
+
+        if (weather.alerts && weather.alerts.length > 0) {
+          msg.send(formatAlerts(weather));
+        }
+
+        return undefined;
       });
     });
   });
