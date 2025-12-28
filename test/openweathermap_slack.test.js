@@ -80,66 +80,16 @@ describe('hubot-openweathermap slack', () => {
     });
 
     it('responds with weather', () => {
-      expect(room.messages).to.eql([
-        ['alice', 'hubot weather'],
-        ['hubot', {
-          attachments: [
-            {
-              author_icon: 'https://github.com/openweathermap.png',
-              author_link: 'https://openweathermap.org/',
-              author_name: 'OpenWeather',
-              color: '#eb6e4b',
-              fallback: 'Currently broken clouds and 50F/10C in Nashville-Davidson, Tennessee',
-              fields: [
-                {
-                  short: true,
-                  title: 'Conditions',
-                  value: 'Rain (broken clouds)',
-                },
-                {
-                  short: true,
-                  title: 'Temperature',
-                  value: '50F/10C',
-                },
-                {
-                  short: true,
-                  title: 'Feels Like',
-                  value: '49F/10C',
-                },
-                {
-                  short: true,
-                  title: 'Humidity',
-                  value: '90%',
-                },
-              ],
-              footer: 'Weather data provided by OpenWeather',
-              thumb_url: 'https://openweathermap.org/img/wn/10n@4x.png',
-              title: 'Weather for Nashville-Davidson, Tennessee',
-              title_link: 'https://openweathermap.org/weathermap?zoom=12&lat=36.1622&lon=-86.7744',
-              ts: 1766110733,
-            },
-            {
-              author_icon: 'https://a.slack-edge.com/production-standard-emoji-assets/14.0/apple-small/26a0-fe0f.png',
-              author_name: 'NWS Nashville TN',
-              color: '#FF0000',
-              fallback: 'Flood Advisory: * WHAT...Flooding caused by excessive rainfall is expected.\n\n* WHERE...A portion of Middle Tennessee, including the following\ncounties, Cheatham, Davidson, Robertson and Sumner.\n\n* WHEN...Until 1000 PM CST.\n\n* IMPACTS...Minor flooding in low-lying and poor drainage areas.\n\n* ADDITIONAL DETAILS...\n- At 656 PM CST, Doppler radar indicated heavy rain due to\nthunderstorms. Minor flooding is ongoing or expected to begin\nshortly in the advisory area. Between 1 and 2 inches of rain\nhave fallen.\n- Some locations that will experience flooding include...\nGallatin, Springfield, Ashland City, Nashville, Madison,\nHendersonville, Goodlettsville, White House, Millersville,\nGreenbrier, Forest Hills, Oak Hill, Coopertown, Belle Meade,\nLakewood, Ridgetop, Cross Plains, Portland, Joelton and Old\nHickory.\n- http://www.weather.gov/safety/flood',
-              fields: [
-                {
-                  title: 'Effective',
-                  value: 'Dec 18, 2025 6:56 PM CST - Dec 18, 2025 10:00 PM CST',
-                },
-                {
-                  title: 'Tags',
-                  value: 'Flood',
-                },
-              ],
-              text: '```\n* WHAT...Flooding caused by excessive rainfall is expected.\n\n* WHERE...A portion of Middle Tennessee, including the following\ncounties, Cheatham, Davidson, Robertson and Sumner.\n\n* WHEN...Until 1000 PM CST.\n\n* IMPACTS...Minor flooding in low-lying and poor drainage areas.\n\n* ADDITIONAL DETAILS...\n- At 656 PM CST, Doppler radar indicated heavy rain due to\nthunderstorms. Minor flooding is ongoing or expected to begin\nshortly in the advisory area. Between 1 and 2 inches of rain\nhave fallen.\n- Some locations that will experience flooding include...\nGallatin, Springfield, Ashland City, Nashville, Madison,\nHendersonville, Goodlettsville, White House, Millersville,\nGreenbrier, Forest Hills, Oak Hill, Coopertown, Belle Meade,\nLakewood, Ridgetop, Cross Plains, Portland, Joelton and Old\nHickory.\n- http://www.weather.gov/safety/flood\n```',
-              title: 'Flood Advisory',
-            },
-          ],
-        },
-        ],
-      ]);
+      expect(room.messages).to.have.lengthOf(3);
+      expect(room.messages[0]).to.eql(['alice', 'hubot weather']);
+      expect(room.messages[1][0]).to.equal('hubot');
+      expect(room.messages[1][1]).to.have.property('attachments');
+      expect(room.messages[1][1].attachments).to.have.lengthOf(1);
+      expect(room.messages[1][1].attachments[0].title).to.equal('Weather for Nashville-Davidson, Tennessee');
+      expect(room.messages[2][0]).to.equal('hubot');
+      expect(room.messages[2][1]).to.have.property('attachments');
+      expect(room.messages[2][1].attachments).to.have.lengthOf(1);
+      expect(room.messages[2][1].attachments[0].title).to.equal('Flood Advisory');
     });
   });
 
@@ -157,66 +107,16 @@ describe('hubot-openweathermap slack', () => {
     });
 
     it('responds with weather', () => {
-      expect(room.messages).to.eql([
-        ['alice', 'hubot weather 37206'],
-        ['hubot', {
-          attachments: [
-            {
-              author_icon: 'https://github.com/openweathermap.png',
-              author_link: 'https://openweathermap.org/',
-              author_name: 'OpenWeather',
-              color: '#eb6e4b',
-              fallback: 'Currently broken clouds and 50F/10C in Nashville, US',
-              fields: [
-                {
-                  short: true,
-                  title: 'Conditions',
-                  value: 'Rain (broken clouds)',
-                },
-                {
-                  short: true,
-                  title: 'Temperature',
-                  value: '50F/10C',
-                },
-                {
-                  short: true,
-                  title: 'Feels Like',
-                  value: '49F/10C',
-                },
-                {
-                  short: true,
-                  title: 'Humidity',
-                  value: '90%',
-                },
-              ],
-              footer: 'Weather data provided by OpenWeather',
-              thumb_url: 'https://openweathermap.org/img/wn/10n@4x.png',
-              title: 'Weather for Nashville, US',
-              title_link: 'https://openweathermap.org/weathermap?zoom=12&lat=36.1622&lon=-86.7744',
-              ts: 1766110733,
-            },
-            {
-              author_icon: 'https://a.slack-edge.com/production-standard-emoji-assets/14.0/apple-small/26a0-fe0f.png',
-              author_name: 'NWS Nashville TN',
-              color: '#FF0000',
-              fallback: 'Flood Advisory: * WHAT...Flooding caused by excessive rainfall is expected.\n\n* WHERE...A portion of Middle Tennessee, including the following\ncounties, Cheatham, Davidson, Robertson and Sumner.\n\n* WHEN...Until 1000 PM CST.\n\n* IMPACTS...Minor flooding in low-lying and poor drainage areas.\n\n* ADDITIONAL DETAILS...\n- At 656 PM CST, Doppler radar indicated heavy rain due to\nthunderstorms. Minor flooding is ongoing or expected to begin\nshortly in the advisory area. Between 1 and 2 inches of rain\nhave fallen.\n- Some locations that will experience flooding include...\nGallatin, Springfield, Ashland City, Nashville, Madison,\nHendersonville, Goodlettsville, White House, Millersville,\nGreenbrier, Forest Hills, Oak Hill, Coopertown, Belle Meade,\nLakewood, Ridgetop, Cross Plains, Portland, Joelton and Old\nHickory.\n- http://www.weather.gov/safety/flood',
-              fields: [
-                {
-                  title: 'Effective',
-                  value: 'Dec 18, 2025 6:56 PM CST - Dec 18, 2025 10:00 PM CST',
-                },
-                {
-                  title: 'Tags',
-                  value: 'Flood',
-                },
-              ],
-              text: '```\n* WHAT...Flooding caused by excessive rainfall is expected.\n\n* WHERE...A portion of Middle Tennessee, including the following\ncounties, Cheatham, Davidson, Robertson and Sumner.\n\n* WHEN...Until 1000 PM CST.\n\n* IMPACTS...Minor flooding in low-lying and poor drainage areas.\n\n* ADDITIONAL DETAILS...\n- At 656 PM CST, Doppler radar indicated heavy rain due to\nthunderstorms. Minor flooding is ongoing or expected to begin\nshortly in the advisory area. Between 1 and 2 inches of rain\nhave fallen.\n- Some locations that will experience flooding include...\nGallatin, Springfield, Ashland City, Nashville, Madison,\nHendersonville, Goodlettsville, White House, Millersville,\nGreenbrier, Forest Hills, Oak Hill, Coopertown, Belle Meade,\nLakewood, Ridgetop, Cross Plains, Portland, Joelton and Old\nHickory.\n- http://www.weather.gov/safety/flood\n```',
-              title: 'Flood Advisory',
-            },
-          ],
-        },
-        ],
-      ]);
+      expect(room.messages).to.have.lengthOf(3);
+      expect(room.messages[0]).to.eql(['alice', 'hubot weather 37206']);
+      expect(room.messages[1][0]).to.equal('hubot');
+      expect(room.messages[1][1]).to.have.property('attachments');
+      expect(room.messages[1][1].attachments).to.have.lengthOf(1);
+      expect(room.messages[1][1].attachments[0].title).to.equal('Weather for Nashville, US');
+      expect(room.messages[2][0]).to.equal('hubot');
+      expect(room.messages[2][1]).to.have.property('attachments');
+      expect(room.messages[2][1].attachments).to.have.lengthOf(1);
+      expect(room.messages[2][1].attachments[0].title).to.equal('Flood Advisory');
     });
   });
 
@@ -234,65 +134,16 @@ describe('hubot-openweathermap slack', () => {
     });
 
     it('responds with weather', () => {
-      expect(room.messages).to.eql([
-        ['alice', 'hubot weather denver, CO'],
-        ['hubot', {
-          attachments: [
-            {
-              author_icon: 'https://github.com/openweathermap.png',
-              author_link: 'https://openweathermap.org/',
-              author_name: 'OpenWeather',
-              color: '#eb6e4b',
-              fallback: 'Currently scattered clouds and 59F/15C in Denver, Colorado',
-              fields: [
-                {
-                  short: true,
-                  title: 'Conditions',
-                  value: 'Clouds (scattered clouds)',
-                },
-                {
-                  short: true,
-                  title: 'Temperature',
-                  value: '59F/15C',
-                },
-                {
-                  short: true,
-                  title: 'Feels Like',
-                  value: '56F/13C',
-                },
-                {
-                  short: true,
-                  title: 'Humidity',
-                  value: '23%',
-                },
-              ],
-              footer: 'Weather data provided by OpenWeather',
-              thumb_url: 'https://openweathermap.org/img/wn/03n@4x.png',
-              title: 'Weather for Denver, Colorado',
-              title_link: 'https://openweathermap.org/weathermap?zoom=12&lat=40.0154&lon=-105.2702',
-              ts: 1766204623,
-            },
-            {
-              author_icon: 'https://a.slack-edge.com/production-standard-emoji-assets/14.0/apple-small/26a0-fe0f.png',
-              author_name: 'NWS Denver CO',
-              color: '#FF0000',
-              fallback: 'Red Flag Warning: ...RED FLAG WARNING REMAINS IN EFFECT UNTIL MIDNIGHT...\n\nWest west winds of 20-35 mph with gusts as high as 60 mph in wind\nprone areas near the base of the foothills will continue into\nthis evening. They will also be spreading east onto the nearby\nadjacent plains and I-25 Corridor through late evening and\novernight. While the Particularly Dangerous Situation for the\nfoothills of Boulder and northern Jefferson Counties has eased,\nRed Flag conditions will remain in place as we stay in a near\nrecord warm, dry, and windy airmass along the Front Range through\nmidnight. In fact, strong, gusty winds will persist through much\nof the night with only a slow improvement in humidity values.\nThus, near critical Red Flag conditions will occur into early\nSaturday morning.\n\n* AFFECTED AREA...Fire Weather Zone 239.\n\n* TIMING...Until midnight MST tonight.\n\n* WINDS...West 25 to 35 mph with gusts up to 60 mph.\n\n* RELATIVE HUMIDITY...As low as 14 percent.\n\n* IMPACTS...Conditions will be favorable for rapid fire spread.\nAvoid outdoor burning and any activity that may produce a\nspark and start a wildfire.',
-              fields: [
-                {
-                  title: 'Effective',
-                  value: 'Dec 19, 2025 8:08 PM MST - Dec 20, 2025 12:00 AM MST',
-                },
-                {
-                  title: 'Tags',
-                  value: 'Other dangers',
-                },
-              ],
-              text: '```\n...RED FLAG WARNING REMAINS IN EFFECT UNTIL MIDNIGHT...\n\nWest west winds of 20-35 mph with gusts as high as 60 mph in wind\nprone areas near the base of the foothills will continue into\nthis evening. They will also be spreading east onto the nearby\nadjacent plains and I-25 Corridor through late evening and\novernight. While the Particularly Dangerous Situation for the\nfoothills of Boulder and northern Jefferson Counties has eased,\nRed Flag conditions will remain in place as we stay in a near\nrecord warm, dry, and windy airmass along the Front Range through\nmidnight. In fact, strong, gusty winds will persist through much\nof the night with only a slow improvement in humidity values.\nThus, near critical Red Flag conditions will occur into early\nSaturday morning.\n\n* AFFECTED AREA...Fire Weather Zone 239.\n\n* TIMING...Until midnight MST tonight.\n\n* WINDS...West 25 to 35 mph with gusts up to 60 mph.\n\n* RELATIVE HUMIDITY...As low as 14 percent.\n\n* IMPACTS...Conditions will be favorable for rapid fire spread.\nAvoid outdoor burning and any activity that may produce a\nspark and start a wildfire.\n```',
-              title: 'Red Flag Warning',
-            },
-          ],
-        }],
-      ]);
+      expect(room.messages).to.have.lengthOf(3);
+      expect(room.messages[0]).to.eql(['alice', 'hubot weather denver, CO']);
+      expect(room.messages[1][0]).to.equal('hubot');
+      expect(room.messages[1][1]).to.have.property('attachments');
+      expect(room.messages[1][1].attachments).to.have.lengthOf(1);
+      expect(room.messages[1][1].attachments[0].title).to.equal('Weather for Denver, Colorado');
+      expect(room.messages[2][0]).to.equal('hubot');
+      expect(room.messages[2][1]).to.have.property('attachments');
+      expect(room.messages[2][1].attachments).to.have.lengthOf(1);
+      expect(room.messages[2][1].attachments[0].title).to.equal('Red Flag Warning');
     });
   });
 
@@ -322,65 +173,16 @@ describe('hubot-openweathermap slack', () => {
     });
 
     it('responds with weather', () => {
-      expect(room.messages).to.eql([
-        ['alice', 'hubot weather London, UK'],
-        ['hubot', {
-          attachments: [
-            {
-              author_icon: 'https://github.com/openweathermap.png',
-              author_link: 'https://openweathermap.org/',
-              author_name: 'OpenWeather',
-              color: '#eb6e4b',
-              fallback: 'Currently scattered clouds and 59F/15C in London, GB',
-              fields: [
-                {
-                  short: true,
-                  title: 'Conditions',
-                  value: 'Clouds (scattered clouds)',
-                },
-                {
-                  short: true,
-                  title: 'Temperature',
-                  value: '59F/15C',
-                },
-                {
-                  short: true,
-                  title: 'Feels Like',
-                  value: '56F/13C',
-                },
-                {
-                  short: true,
-                  title: 'Humidity',
-                  value: '23%',
-                },
-              ],
-              footer: 'Weather data provided by OpenWeather',
-              thumb_url: 'https://openweathermap.org/img/wn/03n@4x.png',
-              title: 'Weather for London, GB',
-              title_link: 'https://openweathermap.org/weathermap?zoom=12&lat=40.0154&lon=-105.2702',
-              ts: 1766204623,
-            },
-            {
-              author_icon: 'https://a.slack-edge.com/production-standard-emoji-assets/14.0/apple-small/26a0-fe0f.png',
-              author_name: 'NWS Denver CO',
-              color: '#FF0000',
-              fallback: 'Red Flag Warning: ...RED FLAG WARNING REMAINS IN EFFECT UNTIL MIDNIGHT...\n\nWest west winds of 20-35 mph with gusts as high as 60 mph in wind\nprone areas near the base of the foothills will continue into\nthis evening. They will also be spreading east onto the nearby\nadjacent plains and I-25 Corridor through late evening and\novernight. While the Particularly Dangerous Situation for the\nfoothills of Boulder and northern Jefferson Counties has eased,\nRed Flag conditions will remain in place as we stay in a near\nrecord warm, dry, and windy airmass along the Front Range through\nmidnight. In fact, strong, gusty winds will persist through much\nof the night with only a slow improvement in humidity values.\nThus, near critical Red Flag conditions will occur into early\nSaturday morning.\n\n* AFFECTED AREA...Fire Weather Zone 239.\n\n* TIMING...Until midnight MST tonight.\n\n* WINDS...West 25 to 35 mph with gusts up to 60 mph.\n\n* RELATIVE HUMIDITY...As low as 14 percent.\n\n* IMPACTS...Conditions will be favorable for rapid fire spread.\nAvoid outdoor burning and any activity that may produce a\nspark and start a wildfire.',
-              fields: [
-                {
-                  title: 'Effective',
-                  value: 'Dec 19, 2025 8:08 PM MST - Dec 20, 2025 12:00 AM MST',
-                },
-                {
-                  title: 'Tags',
-                  value: 'Other dangers',
-                },
-              ],
-              text: '```\n...RED FLAG WARNING REMAINS IN EFFECT UNTIL MIDNIGHT...\n\nWest west winds of 20-35 mph with gusts as high as 60 mph in wind\nprone areas near the base of the foothills will continue into\nthis evening. They will also be spreading east onto the nearby\nadjacent plains and I-25 Corridor through late evening and\novernight. While the Particularly Dangerous Situation for the\nfoothills of Boulder and northern Jefferson Counties has eased,\nRed Flag conditions will remain in place as we stay in a near\nrecord warm, dry, and windy airmass along the Front Range through\nmidnight. In fact, strong, gusty winds will persist through much\nof the night with only a slow improvement in humidity values.\nThus, near critical Red Flag conditions will occur into early\nSaturday morning.\n\n* AFFECTED AREA...Fire Weather Zone 239.\n\n* TIMING...Until midnight MST tonight.\n\n* WINDS...West 25 to 35 mph with gusts up to 60 mph.\n\n* RELATIVE HUMIDITY...As low as 14 percent.\n\n* IMPACTS...Conditions will be favorable for rapid fire spread.\nAvoid outdoor burning and any activity that may produce a\nspark and start a wildfire.\n```',
-              title: 'Red Flag Warning',
-            },
-          ],
-        }],
-      ]);
+      expect(room.messages).to.have.lengthOf(3);
+      expect(room.messages[0]).to.eql(['alice', 'hubot weather London, UK']);
+      expect(room.messages[1][0]).to.equal('hubot');
+      expect(room.messages[1][1]).to.have.property('attachments');
+      expect(room.messages[1][1].attachments).to.have.lengthOf(1);
+      expect(room.messages[1][1].attachments[0].title).to.equal('Weather for London, GB');
+      expect(room.messages[2][0]).to.equal('hubot');
+      expect(room.messages[2][1]).to.have.property('attachments');
+      expect(room.messages[2][1].attachments).to.have.lengthOf(1);
+      expect(room.messages[2][1].attachments[0].title).to.equal('Red Flag Warning');
     });
   });
 

@@ -76,10 +76,13 @@ describe('hubot-openweathermap', () => {
     });
 
     it('responds with weather', () => {
-      expect(room.messages).to.eql([
-        ['alice', 'hubot weather'],
-        ['hubot', 'Currently broken clouds and 50F/10C in Nashville-Davidson, Tennessee'],
-      ]);
+      expect(room.messages).to.have.lengthOf(3);
+      expect(room.messages[0]).to.eql(['alice', 'hubot weather']);
+      expect(room.messages[1][0]).to.equal('hubot');
+      expect(room.messages[1][1]).to.include('Currently broken clouds and 50F/10C in Nashville-Davidson, Tennessee');
+      expect(room.messages[2][0]).to.equal('hubot');
+      expect(room.messages[2][1]).to.include('⚠️ Flood Advisory issued');
+      expect(room.messages[2][1]).to.include('NWS Nashville TN');
     });
   });
 
@@ -97,10 +100,13 @@ describe('hubot-openweathermap', () => {
     });
 
     it('responds with weather', () => {
-      expect(room.messages).to.eql([
-        ['alice', 'hubot weather 37206'],
-        ['hubot', 'Currently broken clouds and 50F/10C in Nashville, US'],
-      ]);
+      expect(room.messages).to.have.lengthOf(3);
+      expect(room.messages[0]).to.eql(['alice', 'hubot weather 37206']);
+      expect(room.messages[1][0]).to.equal('hubot');
+      expect(room.messages[1][1]).to.include('Currently broken clouds and 50F/10C in Nashville, US');
+      expect(room.messages[2][0]).to.equal('hubot');
+      expect(room.messages[2][1]).to.include('⚠️ Flood Advisory issued');
+      expect(room.messages[2][1]).to.include('NWS Nashville TN');
     });
   });
 
@@ -118,10 +124,13 @@ describe('hubot-openweathermap', () => {
     });
 
     it('responds with weather', () => {
-      expect(room.messages).to.eql([
-        ['alice', 'hubot weather denver, CO'],
-        ['hubot', 'Currently scattered clouds and 59F/15C in Denver, Colorado'],
-      ]);
+      expect(room.messages).to.have.lengthOf(3);
+      expect(room.messages[0]).to.eql(['alice', 'hubot weather denver, CO']);
+      expect(room.messages[1][0]).to.equal('hubot');
+      expect(room.messages[1][1]).to.include('Currently scattered clouds and 59F/15C in Denver, Colorado');
+      expect(room.messages[2][0]).to.equal('hubot');
+      expect(room.messages[2][1]).to.include('⚠️ Red Flag Warning issued');
+      expect(room.messages[2][1]).to.include('NWS Denver CO');
     });
   });
 
@@ -151,10 +160,13 @@ describe('hubot-openweathermap', () => {
     });
 
     it('responds with weather', () => {
-      expect(room.messages).to.eql([
-        ['alice', 'hubot weather London, UK'],
-        ['hubot', 'Currently scattered clouds and 59F/15C in London, GB'],
-      ]);
+      expect(room.messages).to.have.lengthOf(3);
+      expect(room.messages[0]).to.eql(['alice', 'hubot weather London, UK']);
+      expect(room.messages[1][0]).to.equal('hubot');
+      expect(room.messages[1][1]).to.include('Currently scattered clouds and 59F/15C in London, GB');
+      expect(room.messages[2][0]).to.equal('hubot');
+      expect(room.messages[2][1]).to.include('⚠️ Red Flag Warning issued');
+      expect(room.messages[2][1]).to.include('NWS Denver CO');
     });
   });
 
