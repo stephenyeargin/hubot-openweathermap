@@ -230,7 +230,7 @@ module.exports = (robot) => {
         attachments: [
           {
             title: `Weather for ${formatLocationName(json.location)}`,
-            title_link: `https://openweathermap.org/weathermap?zoom=12&lat=${json.lat}&lon=${json.lon}`,
+            title_link: `https://openweathermap.org/find?q=${json.location.name},${json.location.country}`,
             fallback: textFallback,
             author_icon: 'https://github.com/openweathermap.png',
             author_link: 'https://openweathermap.org/',
@@ -279,7 +279,7 @@ module.exports = (robot) => {
       const embeds = [
         new DiscordEmbedBuilder()
           .setTitle(`Weather for ${formatLocationName(json.location)}`)
-          .setURL(`https://openweathermap.org/weathermap?zoom=12&lat=${json.lat}&lon=${json.lon}`)
+          .setURL(`https://openweathermap.org/find?q=${json.location.name},${json.location.country}`)
           .setAuthor({
             name: 'OpenWeather',
             url: 'https://openweathermap.org/',
