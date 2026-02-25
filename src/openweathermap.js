@@ -478,4 +478,16 @@ module.exports = (robot) => {
       });
     });
   });
+
+  /**
+   * Register tools for Ollama integration
+   */
+  // eslint-disable-next-line global-require
+  const registerOllamaTools = require('./ollama-tools');
+  registerOllamaTools(robot, {
+    geocodeLocation,
+    getOneCallWeather,
+    reverseGeocode,
+    formatUnits,
+  });
 };
