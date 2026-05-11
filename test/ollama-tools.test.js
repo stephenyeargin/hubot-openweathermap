@@ -33,12 +33,12 @@ describe('ollama-tools', () => {
   });
 
   afterEach(() => {
-    delete process.env.HUBOT_OPENWEATHER_OLLAMA_ENABLED;
+    delete process.env.HUBOT_OPEN_WEATHER_OLLAMA_ENABLED;
     delete require.cache[modulePath];
     sinon.restore();
   });
 
-  context('when HUBOT_OPENWEATHER_OLLAMA_ENABLED is not set', () => {
+  context('when HUBOT_OPEN_WEATHER_OLLAMA_ENABLED is not set', () => {
     it('logs debug message and returns early', () => {
       // eslint-disable-next-line global-require
       const registerOllamaTools = require('../src/ollama-tools');
@@ -51,9 +51,9 @@ describe('ollama-tools', () => {
     });
   });
 
-  context('when HUBOT_OPENWEATHER_OLLAMA_ENABLED is true', () => {
+  context('when HUBOT_OPEN_WEATHER_OLLAMA_ENABLED is true', () => {
     it('attempts to register tools when enabled', () => {
-      process.env.HUBOT_OPENWEATHER_OLLAMA_ENABLED = 'true';
+      process.env.HUBOT_OPEN_WEATHER_OLLAMA_ENABLED = 'true';
 
       // eslint-disable-next-line global-require
       const registerOllamaTools = require('../src/ollama-tools');
@@ -66,7 +66,7 @@ describe('ollama-tools', () => {
     });
 
     it('handles missing hubot-ollama gracefully', () => {
-      process.env.HUBOT_OPENWEATHER_OLLAMA_ENABLED = 'true';
+      process.env.HUBOT_OPEN_WEATHER_OLLAMA_ENABLED = 'true';
       // eslint-disable-next-line global-require
       const registerOllamaTools = require('../src/ollama-tools');
 
@@ -75,12 +75,12 @@ describe('ollama-tools', () => {
         registerOllamaTools(robot, mockFunctions);
       }).to.not.throw();
 
-      // Should log debug about not finding module
-      expect(robot.logger.info).to.not.have.been.called;
+      // Should handle missing module without treating it as an error
+      expect(robot.logger.error).to.not.have.been.called;
     });
 
     it('validates all required functions are passed', () => {
-      process.env.HUBOT_OPENWEATHER_OLLAMA_ENABLED = 'true';
+      process.env.HUBOT_OPEN_WEATHER_OLLAMA_ENABLED = 'true';
       // eslint-disable-next-line global-require
       const registerOllamaTools = require('../src/ollama-tools');
 
@@ -95,7 +95,7 @@ describe('ollama-tools', () => {
 
   context('error handling', () => {
     it('does not crash when functions are not provided', () => {
-      process.env.HUBOT_OPENWEATHER_OLLAMA_ENABLED = 'true';
+      process.env.HUBOT_OPEN_WEATHER_OLLAMA_ENABLED = 'true';
       // eslint-disable-next-line global-require
       const registerOllamaTools = require('../src/ollama-tools');
 
@@ -105,7 +105,7 @@ describe('ollama-tools', () => {
     });
 
     it('handles missing robot logger gracefully', () => {
-      process.env.HUBOT_OPENWEATHER_OLLAMA_ENABLED = 'true';
+      process.env.HUBOT_OPEN_WEATHER_OLLAMA_ENABLED = 'true';
       // eslint-disable-next-line global-require
       const registerOllamaTools = require('../src/ollama-tools');
 
