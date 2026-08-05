@@ -27,8 +27,8 @@
     "eslint-plugin-n": "^16.5.0",
     "eslint-plugin-promise": "^6.1.1",
     "hubot": "^14",
-    "husky": "^8.0.3",
-    "nock": "^13.4.0"
+    "husky": "^9.1.7",
+    "nock": "^14.0.17"
   },
   "main": "index.js",
   "scripts": {
@@ -41,7 +41,7 @@
     "node": "22.22.3"
   },
   "dependencies": {
-    "dayjs": "^1.11.10",
-    "semver": "^7.5.4"
+    "dayjs": "^1.11.21",
+    "semver": "^7.5.5"
   }
 }
