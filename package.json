@@ -16,6 +16,9 @@
   "bugs": {
     "url": "https://github.com/stephenyeargin/hubot-openweathermap/issues"
   },
+  "engines": {
+    "node": ">=22"
+  },
   "peerDependencies": {
     "discord.js": "^14",
     "hubot": ">=3 || 0.0.0-development"
